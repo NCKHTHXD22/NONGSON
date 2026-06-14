@@ -1,0 +1,66 @@
+graph TB
+    subgraph CLIENTS["CLIENTS"]
+        C1["Web Admin\nReact 19"]
+        C2["Zalo OA\nWebhook"]
+    end
+
+    subgraph API["API LAYER — Node.js Express"]
+        R1["Auth Router"]
+        R2["Household Router"]
+        R3["Report Router"]
+        R4["Zalo Router"]
+        R5["Audit Router"]
+    end
+
+    subgraph SVC["SERVICE LAYER — Business Logic"]
+        S1["AuthService"]
+        S2["HouseholdService\nTách · Gộp · Chuyển"]
+        S3["ReportService\nThống kê · Excel · PDF"]
+        S4["ZaloService\nState Machine"]
+        S5["AuditService\nAuto-snapshot"]
+        S6["SearchService\nFull-text"]
+    end
+
+    subgraph REPO["REPOSITORY LAYER — Data Access Abstraction"]
+        PG_REPO["PostgreSQL Repos\nprisma client"]
+        MG_REPO["MongoDB Repos\nmongoose models"]
+    end
+
+    subgraph PG["🐘 PostgreSQL — Dữ liệu QUAN HỆ & CẤU TRÚC"]
+        PG1[("villages\nThôn xóm")]
+        PG2[("households\nCore hồ sơ hộ")]
+        PG3[("members\nNhân khẩu")]
+        PG4[("admin_users\nTài khoản cán bộ")]
+        PG5[("movement_records\nBiến động chuyển đến/đi")]
+        PG6[("household_relations\nTách · Gộp lịch sử")]
+    end
+
+    subgraph MG["🍃 MongoDB — Dữ liệu LINH HOẠT & LOG"]
+        MG1[("audit_logs\nSnapshot đầy đủ trước/sau")]
+        MG2[("zalo_sessions\nState machine người dùng")]
+        MG3[("zalo_events\nWebhook event stream")]
+        MG4[("report_cache\nKết quả thống kê cache")]
+        MG5[("notifications\nZalo group messages")]
+        MG6[("search_index\nFull-text search cache")]
+    end
+
+    CLIENTS --> API
+    R1 --> S1
+    R2 --> S2
+    R3 --> S3
+    R4 --> S4
+    R5 --> S5
+    S2 --> S5
+    S3 --> S6
+    S1 & S2 & S3 & S6 --> PG_REPO
+    S4 & S5 --> MG_REPO
+    S2 --> MG_REPO
+    PG_REPO --> PG1 & PG2 & PG3 & PG4 & PG5 & PG6
+    MG_REPO --> MG1 & MG2 & MG3 & MG4 & MG5 & MG6
+
+    style CLIENTS fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a
+    style API fill:#dcfce7,stroke:#16a34a,color:#14532d
+    style SVC fill:#fce7f3,stroke:#db2777,color:#831843
+    style REPO fill:#fef9c3,stroke:#ca8a04,color:#713f12
+    style PG fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+    style MG fill:#fff7ed,stroke:#ea580c,color:#7c2d12

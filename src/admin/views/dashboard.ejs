@@ -1,0 +1,151 @@
+<%- include('partials/_head', { title: 'Tổng quan', user, activeMenu: 'dashboard' }) %>
+
+<!-- Flash -->
+<% if (flash.error) { %>
+<div class="alert alert-danger alert-dismissible py-2 mb-3">
+  <i class="bi bi-exclamation-circle me-1"></i><%= flash.error %>
+  <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+<% if (flash.success) { %>
+<div class="alert alert-success alert-dismissible py-2 mb-3">
+  <i class="bi bi-check-circle me-1"></i><%= flash.success %>
+  <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+
+<!-- Thống kê -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted" style="font-size:.8rem;font-weight:600;text-transform:uppercase">Tổng cộng</span>
+          <span class="rounded-2 p-2 bg-primary bg-opacity-10"><i class="bi bi-inbox text-primary"></i></span>
+        </div>
+        <div class="fw-bold" style="font-size:2rem;line-height:1"><%= stats.total %></div>
+        <div class="text-muted mt-1" style="font-size:.78rem">Tất cả góp ý</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted" style="font-size:.8rem;font-weight:600;text-transform:uppercase">Chờ xử lý</span>
+          <span class="rounded-2 p-2" style="background:#fef3c7"><i class="bi bi-hourglass-split" style="color:#92400e"></i></span>
+        </div>
+        <div class="fw-bold" style="font-size:2rem;line-height:1;color:#92400e"><%= stats.pending %></div>
+        <div class="text-muted mt-1" style="font-size:.78rem">Cần xử lý</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted" style="font-size:.8rem;font-weight:600;text-transform:uppercase">Đang xử lý</span>
+          <span class="rounded-2 p-2" style="background:#dbeafe"><i class="bi bi-gear" style="color:#1e40af"></i></span>
+        </div>
+        <div class="fw-bold" style="font-size:2rem;line-height:1;color:#1e40af"><%= stats.processing %></div>
+        <div class="text-muted mt-1" style="font-size:.78rem">Đang tiến hành</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <span class="text-muted" style="font-size:.8rem;font-weight:600;text-transform:uppercase">Đã xử lý</span>
+          <span class="rounded-2 p-2" style="background:#d1fae5"><i class="bi bi-check2-circle" style="color:#065f46"></i></span>
+        </div>
+        <div class="fw-bold" style="font-size:2rem;line-height:1;color:#065f46"><%= stats.done %></div>
+        <div class="text-muted mt-1" style="font-size:.78rem">Hoàn thành</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart + Recent -->
+<div class="row g-3">
+  <div class="col-lg-7">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="card-title fw-semibold mb-3">Góp ý 7 ngày qua</h6>
+        <canvas id="feedbackChart" height="200"></canvas>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h6 class="card-title fw-semibold mb-0">Góp ý mới nhất</h6>
+          <a href="/admin/feedbacks" class="btn btn-sm btn-outline-secondary" style="font-size:.75rem">
+            Xem tất cả
+          </a>
+        </div>
+        <% if (recent.length === 0) { %>
+        <div class="text-center text-muted py-4">
+          <i class="bi bi-inbox" style="font-size:2rem"></i>
+          <p class="mt-2 mb-0" style="font-size:.875rem">Chưa có góp ý nào</p>
+        </div>
+        <% } else { %>
+        <div class="list-group list-group-flush">
+          <% recent.forEach(function(fb) { %>
+          <a href="/admin/feedbacks/<%= fb._id %>" class="list-group-item list-group-item-action px-0 py-2 border-0 border-bottom">
+            <div class="d-flex align-items-start gap-2">
+              <div class="avatar-circle mt-1" style="width:28px;height:28px;font-size:.75rem;flex-shrink:0">
+                <i class="bi bi-person-fill text-white"></i>
+              </div>
+              <div class="flex-grow-1 overflow-hidden">
+                <div class="d-flex align-items-center justify-content-between">
+                  <span class="fw-semibold" style="font-size:.82rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px">
+                    <%= fb.displayName || fb.contact %>
+                  </span>
+                  <% const st = { pending:'badge-pending', processing:'badge-processing', done:'badge-done' }[fb.status]; %>
+                  <span class="badge rounded-pill <%= st %>" style="font-size:.68rem">
+                    <%= { pending:'Chờ xử lý', processing:'Đang xử lý', done:'Đã xử lý' }[fb.status] %>
+                  </span>
+                </div>
+                <div class="text-muted" style="font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+                  <%= fb.content %>
+                </div>
+              </div>
+            </div>
+          </a>
+          <% }); %>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<%- include('partials/_footer') %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script>
+  const ctx = document.getElementById('feedbackChart');
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: <%- chartDays %>,
+      datasets: [{
+        label: 'Số góp ý',
+        data: <%- chartCounts %>,
+        backgroundColor: 'rgba(0,104,255,.2)',
+        borderColor: '#0068ff',
+        borderWidth: 2,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 11 } }, grid: { color: '#f3f4f6' } },
+        x: { ticks: { font: { size: 11 } }, grid: { display: false } }
+      }
+    }
+  });
+</script>

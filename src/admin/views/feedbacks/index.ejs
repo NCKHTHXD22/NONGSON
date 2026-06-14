@@ -1,0 +1,161 @@
+<%- include('../partials/_head', { title: 'Danh sách Góp ý', user, activeMenu: 'feedbacks' }) %>
+
+<!-- Flash -->
+<% if (flash.error) { %>
+<div class="alert alert-danger alert-dismissible py-2 mb-3">
+  <i class="bi bi-exclamation-circle me-1"></i><%= flash.error %>
+  <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+<% if (flash.success) { %>
+<div class="alert alert-success alert-dismissible py-2 mb-3">
+  <i class="bi bi-check-circle me-1"></i><%= flash.success %>
+  <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+
+<!-- Filter -->
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body py-2">
+    <form method="GET" action="/admin/feedbacks" class="row g-2 align-items-end">
+      <div class="col-12 col-sm-3">
+        <label class="form-label mb-1" style="font-size:.78rem;font-weight:600;color:#6b7280">TRẠNG THÁI</label>
+        <select name="status" class="form-select form-select-sm">
+          <option value="">-- Tất cả --</option>
+          <option value="pending"     <%= filter.status==='pending'     ? 'selected':'' %>>Chờ xử lý</option>
+          <option value="processing"  <%= filter.status==='processing'  ? 'selected':'' %>>Đang xử lý</option>
+          <option value="done"        <%= filter.status==='done'        ? 'selected':'' %>>Đã xử lý</option>
+        </select>
+      </div>
+      <div class="col-12 col-sm-3">
+        <label class="form-label mb-1" style="font-size:.78rem;font-weight:600;color:#6b7280">PHÂN CÔNG</label>
+        <select name="assignedTo" class="form-select form-select-sm">
+          <option value="">-- Tất cả --</option>
+          <option value="none" <%= filter.assignedTo==='none' ? 'selected':'' %>>Chưa phân công</option>
+          <% admins.forEach(function(a) { %>
+          <option value="<%= a._id %>" <%= filter.assignedTo===a._id.toString() ? 'selected':'' %>><%= a.fullName %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="col-12 col-sm-4">
+        <label class="form-label mb-1" style="font-size:.78rem;font-weight:600;color:#6b7280">TÌM KIẾM</label>
+        <input type="text" name="q" class="form-control form-control-sm"
+          placeholder="Tên, liên hệ, nội dung..." value="<%= filter.q %>">
+      </div>
+      <div class="col-12 col-sm-2 d-flex gap-1">
+        <button type="submit" class="btn btn-primary btn-sm flex-fill">
+          <i class="bi bi-search me-1"></i>Lọc
+        </button>
+        <a href="/admin/feedbacks" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-x-lg"></i>
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Bảng -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white border-bottom d-flex align-items-center justify-content-between py-2">
+    <span class="fw-semibold" style="font-size:.9rem">
+      <i class="bi bi-chat-text me-1 text-primary"></i>
+      Góp ý & Phản ánh
+      <span class="badge bg-secondary ms-1" style="font-size:.7rem"><%= pagination.total %></span>
+    </span>
+  </div>
+  <div class="card-body p-0">
+    <% if (feedbacks.length === 0) { %>
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-inbox" style="font-size:2.5rem"></i>
+      <p class="mt-2 mb-0">Không có góp ý nào phù hợp</p>
+    </div>
+    <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:40px">#</th>
+            <th>Người gửi</th>
+            <th>Nội dung</th>
+            <th style="width:110px">Trạng thái</th>
+            <th style="width:130px">Phân công</th>
+            <th style="width:120px">Ngày gửi</th>
+            <th style="width:80px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% feedbacks.forEach(function(fb, i) { %>
+          <tr>
+            <td class="text-muted" style="font-size:.78rem"><%= (pagination.page - 1) * 20 + i + 1 %></td>
+            <td>
+              <div class="fw-semibold" style="font-size:.85rem"><%= fb.displayName || '(Ẩn danh)' %></div>
+              <div class="text-muted" style="font-size:.77rem"><i class="bi bi-telephone me-1"></i><%= fb.contact %></div>
+            </td>
+            <td>
+              <div class="content-preview text-secondary" style="font-size:.85rem"><%= fb.content %></div>
+              <% if (fb.imageUrl) { %>
+              <span class="text-muted" style="font-size:.75rem"><i class="bi bi-image me-1"></i>Có ảnh</span>
+              <% } %>
+            </td>
+            <td>
+              <% const stCls = { pending:'badge-pending', processing:'badge-processing', done:'badge-done' }[fb.status]; %>
+              <span class="badge rounded-pill <%= stCls %> px-2 py-1" style="font-size:.75rem">
+                <%= { pending:'Chờ xử lý', processing:'Đang xử lý', done:'Đã xử lý' }[fb.status] %>
+              </span>
+            </td>
+            <td style="font-size:.82rem">
+              <% if (fb.assignedTo) { %>
+              <i class="bi bi-person-check text-success me-1"></i><%= fb.assignedTo.fullName %>
+              <% } else { %>
+              <span class="text-muted">—</span>
+              <% } %>
+            </td>
+            <td style="font-size:.78rem;color:#6b7280">
+              <%= new Date(fb.createdAt).toLocaleDateString('vi-VN') %><br>
+              <span style="font-size:.72rem"><%= new Date(fb.createdAt).toLocaleTimeString('vi-VN', {hour:'2-digit',minute:'2-digit'}) %></span>
+            </td>
+            <td>
+              <a href="/admin/feedbacks/<%= fb._id %>" class="btn btn-sm btn-outline-primary py-0" style="font-size:.78rem">
+                <i class="bi bi-eye me-1"></i>Xem
+              </a>
+            </td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </div>
+
+  <!-- Phân trang -->
+  <% if (pagination.totalPages > 1) { %>
+  <div class="card-footer bg-white border-top d-flex align-items-center justify-content-between py-2">
+    <span class="text-muted" style="font-size:.8rem">
+      Trang <%= pagination.page %> / <%= pagination.totalPages %>
+    </span>
+    <nav>
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item <%= pagination.page <= 1 ? 'disabled' : '' %>">
+          <a class="page-link" href="?page=<%= pagination.page - 1 %>&status=<%= filter.status %>&assignedTo=<%= filter.assignedTo %>&q=<%= filter.q %>">
+            <i class="bi bi-chevron-left"></i>
+          </a>
+        </li>
+        <% for (let p = Math.max(1, pagination.page - 2); p <= Math.min(pagination.totalPages, pagination.page + 2); p++) { %>
+        <li class="page-item <%= p === pagination.page ? 'active' : '' %>">
+          <a class="page-link" href="?page=<%= p %>&status=<%= filter.status %>&assignedTo=<%= filter.assignedTo %>&q=<%= filter.q %>">
+            <%= p %>
+          </a>
+        </li>
+        <% } %>
+        <li class="page-item <%= pagination.page >= pagination.totalPages ? 'disabled' : '' %>">
+          <a class="page-link" href="?page=<%= pagination.page + 1 %>&status=<%= filter.status %>&assignedTo=<%= filter.assignedTo %>&q=<%= filter.q %>">
+            <i class="bi bi-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+  <% } %>
+</div>
+
+<%- include('../partials/_footer') %>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập | Quản lý Góp ý Nong Son</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #1e3a5f 0%, #0d2137 100%);
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+    .login-card {
+      background: #fff; border-radius: 1rem;
+      box-shadow: 0 20px 60px rgba(0,0,0,.35);
+      width: 100%; max-width: 400px; padding: 2.5rem 2rem;
+    }
+    .login-logo { font-size: 2.5rem; color: #1e3a5f; }
+    .login-title { font-size: 1rem; font-weight: 600; color: #1e3a5f; }
+    .login-subtitle { font-size: .8rem; color: #6b7280; }
+    .form-control { border-radius: .5rem; border-color: #d1d5db; font-size: .9rem; }
+    .form-control:focus { border-color: #0068ff; box-shadow: 0 0 0 .2rem rgba(0,104,255,.15); }
+    .btn-login {
+      background: #1e3a5f; border: none; border-radius: .5rem;
+      padding: .65rem; font-size: .9rem; font-weight: 500;
+      transition: background .2s;
+    }
+    .btn-login:hover { background: #0068ff; }
+    .divider { height: 1px; background: #f3f4f6; }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="text-center mb-4">
+      <div class="login-logo"><i class="bi bi-buildings"></i></div>
+      <div class="login-title mt-2">UBND Nong Son</div>
+      <div class="login-subtitle">Hệ thống quản lý góp ý & phản ánh</div>
+    </div>
+
+    <% if (error) { %>
+    <div class="alert alert-danger alert-dismissible py-2 mb-3" style="font-size:.875rem">
+      <i class="bi bi-exclamation-circle me-1"></i><%= error %>
+      <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+    </div>
+    <% } %>
+
+    <% if (success) { %>
+    <div class="alert alert-success py-2 mb-3" style="font-size:.875rem">
+      <i class="bi bi-check-circle me-1"></i><%= success %>
+    </div>
+    <% } %>
+
+    <form method="POST" action="/admin/login">
+      <div class="mb-3">
+        <label class="form-label fw-semibold" style="font-size:.85rem">Tên đăng nhập</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="bi bi-person text-muted"></i></span>
+          <input type="text" name="username" class="form-control border-start-0"
+            placeholder="Nhập tên đăng nhập" autocomplete="username" required autofocus>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="form-label fw-semibold" style="font-size:.85rem">Mật khẩu</label>
+        <div class="input-group">
+          <span class="input-group-text bg-light border-end-0"><i class="bi bi-lock text-muted"></i></span>
+          <input type="password" name="password" id="pwdInput" class="form-control border-start-0 border-end-0"
+            placeholder="Nhập mật khẩu" autocomplete="current-password" required>
+          <button type="button" class="input-group-text bg-light border-start-0"
+            onclick="togglePwd()" title="Hiện/ẩn mật khẩu">
+            <i class="bi bi-eye" id="eyeIcon"></i>
+          </button>
+        </div>
+      </div>
+      <button type="submit" class="btn btn-login btn-primary w-100 text-white">
+        <i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
+      </button>
+    </form>
+
+    <div class="divider my-3"></div>
+    <p class="text-center text-muted mb-0" style="font-size:.75rem">
+      <i class="bi bi-shield-lock me-1"></i>Khu vực dành riêng cho cán bộ UBND
+    </p>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    function togglePwd() {
+      const input = document.getElementById('pwdInput');
+      const icon  = document.getElementById('eyeIcon');
+      if (input.type === 'password') { input.type = 'text';     icon.className = 'bi bi-eye-slash'; }
+      else                           { input.type = 'password'; icon.className = 'bi bi-eye'; }
+    }
+  </script>
+</body>
+</html>

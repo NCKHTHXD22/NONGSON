@@ -1,0 +1,63 @@
+sequenceDiagram
+    participant CB as Cán bộ xã
+    participant API as Express API
+    participant SVC as HouseholdService
+    participant AUD as AuditService
+    participant PG as PostgreSQL
+    participant MG as MongoDB
+
+    Note over CB,MG: LUỒNG UC02 — CẬP NHẬT HỘ GIA ĐÌNH
+
+    CB->>API: PUT /api/households/:id
+    API->>API: Verify JWT + RBAC
+    API->>SVC: updateHousehold(id, newData)
+
+    SVC->>PG: SELECT * FROM households WHERE id = ?
+    PG-->>SVC: oldData (snapshot hiện tại)
+
+    SVC->>PG: BEGIN TRANSACTION
+    SVC->>PG: UPDATE households SET ... WHERE id = ?
+    SVC->>PG: UPDATE members SET ... (nếu có)
+    SVC->>PG: COMMIT
+
+    SVC->>AUD: logChange(id, oldData, newData, userId)
+    AUD->>MG: INSERT audit_logs { action, oldData, newData, diff, timestamp }
+
+    SVC-->>API: { success, household }
+    API-->>CB: 200 OK
+
+    Note over CB,MG: LUỒNG UC05 — TÁCH HỘ (2 DB cùng lúc)
+
+    CB->>API: POST /api/households/:id/split
+    API->>SVC: splitHousehold(sourceId, memberIds, newHeadId)
+
+    SVC->>PG: BEGIN TRANSACTION
+    SVC->>PG: INSERT INTO households (hộ mới)
+    SVC->>PG: UPDATE members SET householdId = newId WHERE id IN (...)
+    SVC->>PG: UPDATE households SET status = DA_TACH WHERE id = sourceId
+    SVC->>PG: INSERT INTO household_relations (SPLIT record)
+    SVC->>PG: COMMIT
+
+    SVC->>AUD: logSplit(sourceId, newId, memberIds, userId)
+    AUD->>MG: INSERT audit_logs { action: SPLIT, sourceId, newId, members }
+
+    SVC-->>API: { sourceHousehold, newHousehold }
+    API-->>CB: 200 OK
+
+    Note over CB,MG: LUỒNG UC16 — ZALO TRA CỨU
+
+    participant ZU as Người dân Zalo
+    ZU->>API: POST /webhook (Zalo message)
+    API->>SVC: handleZaloMessage(userId, text)
+
+    SVC->>MG: GET zalo_sessions WHERE userId = ?
+    MG-->>SVC: currentState (IDLE / AWAIT_QUERY / ...)
+
+    SVC->>PG: SELECT households JOIN members WHERE name LIKE ?
+    PG-->>SVC: results[]
+
+    SVC->>MG: UPDATE zalo_sessions (state transition)
+    SVC->>MG: INSERT zalo_events (log tra cứu)
+
+    SVC-->>API: replyMessage
+    API->>ZU: Zalo API sendMessage()

@@ -1,0 +1,70 @@
+graph TB
+    subgraph LAYER0["TẦNG NGƯỜI DÙNG"]
+        U1["🏛 Cán bộ xã / thôn"]
+        U2["👨‍💼 Lãnh đạo xã"]
+        U3["📱 Người dân\nZalo OA"]
+    end
+
+    subgraph LAYER1["TẦNG GIAO DIỆN  —  React 19 · Vite · Tailwind CSS"]
+        F1["Dashboard\nTổng quan"]
+        F2["Quản lý Hộ\nUC01–UC08"]
+        F3["Tìm kiếm\nUC09"]
+        F4["Báo cáo\nUC11–UC12"]
+        F5["Bản đồ\nUC14"]
+        F6["Lịch sử / Phân quyền\nUC13, UC15"]
+    end
+
+    subgraph LAYER2["TẦNG ZALO OA"]
+        Z1["Zalo Official Account"]
+        Z2["Webhook /webhook"]
+        Z3["State Machine\nTra cứu hộ khẩu"]
+        Z4["Rate Limit\n5 lần / người / ngày"]
+    end
+
+    subgraph LAYER3["TẦNG BACKEND  —  Node.js · Express.js · JWT · RBAC"]
+        B1["Auth\nJWT + RBAC"]
+        B2["Household API\nCRUD + Tách/Gộp/Chuyển"]
+        B3["Search API\nFull-text UC09"]
+        B4["Report API\nExcel · PDF UC12"]
+        B5["Audit Middleware\nAuto-log UC15"]
+        B6["Geocoding\nOpenStreetMap"]
+    end
+
+    subgraph LAYER4["TẦNG DỮ LIỆU"]
+        DB1["MongoDB Atlas\nPhương án A"]
+        DB2["PostgreSQL + Prisma\nPhương án B"]
+        REDIS["Redis · Upstash\nToken · Session · Cache"]
+        CDN["Cloudinary\nFile · Ảnh"]
+    end
+
+    subgraph LAYER5["MODELS"]
+        M1["Household\nsoHoKhau · chuHo · thanhVien · toaDo"]
+        M2["Village\nTên thôn · mã thôn"]
+        M3["AdminUser\nrole · villageIds · zaloUserId"]
+        M4["AuditLog\naction · oldData · newData · diff"]
+    end
+
+    subgraph LAYER6["DEPLOY  —  Production"]
+        D1["Backend\nRender.com"]
+        D2["Frontend\nVercel"]
+        D3["DB\nAtlas / Railway"]
+    end
+
+    U1 & U2 -->|HTTPS · JWT| LAYER1
+    U3 -->|Zalo Message| Z1
+    LAYER1 -->|REST /api/*| LAYER3
+    Z1 --> Z2 --> Z3 --> Z4 --> B2
+    B1 --> B2 & B3 & B4
+    B2 & B3 & B4 --> B5
+    B2 --> B6
+    LAYER3 --> LAYER4
+    LAYER4 --> M1 & M2 & M3 & M4
+    LAYER3 --> LAYER6
+
+    style LAYER0 fill:#dbeafe,stroke:#3b82f6,color:#1e3a8a
+    style LAYER1 fill:#dcfce7,stroke:#22c55e,color:#14532d
+    style LAYER2 fill:#fef9c3,stroke:#ca8a04,color:#713f12
+    style LAYER3 fill:#fce7f3,stroke:#ec4899,color:#831843
+    style LAYER4 fill:#ede9fe,stroke:#8b5cf6,color:#4c1d95
+    style LAYER5 fill:#fff7ed,stroke:#f97316,color:#7c2d12
+    style LAYER6 fill:#ecfeff,stroke:#06b6d4,color:#164e63

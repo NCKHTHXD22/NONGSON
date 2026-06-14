@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zalo Message — Admin</title>
+  <script type="module" crossorigin src="/assets/index-l6YqOFMq.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-DsK-E-_a.css">
+</head>
+<body>
+
+<!-- Login Overlay -->
+<div id="login-overlay">
+  <div class="login-card">
+    <h1>ZALO MESSAGE</h1>
+    <p>Hệ thống gửi tin nhắn qua Zalo OA</p>
+    <input type="password" id="login-pwd" placeholder="Mật khẩu admin" />
+    <button id="btn-login">Đăng nhập</button>
+    <div class="login-error" id="login-err"></div>
+  </div>
+</div>
+
+<!-- Header -->
+<header>
+  <div class="header-title">ZALO MESSAGE <span>Hệ thống gửi tin nhắn qua Zalo OA</span></div>
+  <button class="btn-logout" id="btn-logout">Đăng xuất</button>
+</header>
+
+<!-- Tabs -->
+<div class="tabs">
+  <div class="tab active" data-tab="send">✉️ Gửi tin nhắn</div>
+  <div class="tab" data-tab="followers">👥 Danh sách Follower</div>
+  <div class="tab" data-tab="logs">📋 Lịch sử gửi</div>
+</div>
+
+<main>
+
+  <!-- ═══ TAB: GỬI TIN ═══ -->
+  <div id="tab-send">
+    <div class="auth-row">
+      <input type="password" id="pwd-field" placeholder="Mật khẩu xác thực" />
+      <button class="btn-get-ids" id="btn-get-ids">Lấy danh sách ID ↻</button>
+    </div>
+
+    <div class="card">
+      <div class="send-grid">
+
+        <!-- ── Cột trái ── -->
+        <div>
+
+          <!-- Khu vực đính kèm (Ảnh / Video / File) -->
+          <label>Đính kèm (tuỳ chọn)</label>
+          <div class="attach-type-tabs" id="attach-type-tabs">
+            <button type="button" class="attach-tab-btn active" data-attach="image">🖼 Hình ảnh</button>
+            <button type="button" class="attach-tab-btn" data-attach="video">▶ Video</button>
+            <button type="button" class="attach-tab-btn" data-attach="file">📄 File</button>
+          </div>
+
+          <!-- Panel: Hình ảnh -->
+          <div id="attach-panel-image" class="attach-panel">
+            <div class="upload-zone" id="upload-zone">
+              <input type="file" id="img-input" accept="image/*" multiple />
+              <div class="upload-icon">☁</div>
+              <p>Chọn tối đa 5 ảnh · kéo thả vào đây</p>
+            </div>
+            <div id="img-thumbnails" class="img-thumbnails"></div>
+            <div id="upload-img-status" style="margin-top:6px;font-size:12px;color:#888;"></div>
+          </div>
+
+          <!-- Panel: Video -->
+          <div id="attach-panel-video" class="attach-panel hidden">
+            <div style="margin-bottom:8px;padding:8px 12px;background:#fffbeb;border:1.5px solid #f6d860;border-radius:8px;font-size:12px;color:#7d5a00;">
+              ⚠️ Video chỉ gửi được vào <strong>nhóm</strong> — user cá nhân sẽ tự động bỏ qua.
+            </div>
+            <div class="upload-zone" id="upload-video-zone">
+              <input type="file" id="video-input" accept="video/mp4,video/quicktime" />
+              <div class="upload-icon">🎬</div>
+              <p>Chọn video MP4/MOV · tối đa 100MB</p>
+            </div>
+            <div id="video-info-wrap" class="file-info-wrap hidden">
+              <span class="file-info-icon">🎬</span>
+              <div class="file-info-text">
+                <div id="video-filename" class="file-info-name"></div>
+                <div id="video-filesize" class="file-info-size"></div>
+              </div>
+              <button id="btn-remove-video" class="btn-file-remove" title="Xoá video">✕</button>
+            </div>
+            <!-- Thumbnail tự động qua ffmpeg -->
+            <div id="upload-video-status" style="margin-top:6px;font-size:12px;color:#888;"></div>
+          </div>
+
+          <!-- Panel: File -->
+          <div id="attach-panel-file" class="attach-panel hidden">
+            <div class="upload-zone" id="upload-file-zone">
+              <input type="file" id="file-input" accept=".docx,.pdf,.xlsx,.xls" />
+              <div class="upload-icon">📄</div>
+              <p>Chọn file .docx .pdf .xlsx · tối đa 20MB</p>
+            </div>
+            <div id="file-info-wrap" class="file-info-wrap hidden">
+              <span id="file-type-icon" class="file-info-icon">📄</span>
+              <div class="file-info-text">
+                <div id="file-name-display" class="file-info-name"></div>
+                <div id="file-size-display" class="file-info-size"></div>
+              </div>
+              <button id="btn-remove-file" class="btn-file-remove" title="Xoá file">✕</button>
+            </div>
+            <div id="upload-file-status" style="margin-top:6px;font-size:12px;color:#888;"></div>
+          </div>
+
+          <input type="hidden" id="link-url" />
+
+          <!-- Soạn nội dung -->
+          <div style="margin-top:14px;">
+            <label>Nội dung tin nhắn</label>
+
+            <!-- Thanh công cụ soạn thảo -->
+            <div class="editor-toolbar">
+              <button type="button" class="editor-btn" id="btn-bold" title="Chữ đậm (*text*)"><strong>B</strong></button>
+              <button type="button" class="editor-btn" id="btn-italic" title="Chữ nghiêng (_text_)"><em>I</em></button>
+              <button type="button" class="editor-btn" id="btn-newline" title="Xuống dòng">⏎</button>
+              <div style="position:relative;display:inline-block;">
+                <button type="button" class="editor-btn" id="btn-emoji" title="Chèn emoji">😊</button>
+                <div id="emoji-dropdown" class="emoji-dropdown hidden"></div>
+              </div>
+              <span class="char-counter"><span id="char-count">0</span>/2000</span>
+            </div>
+
+            <textarea id="msg-content" rows="5"
+              placeholder="Nhập nội dung tin nhắn...&#10;&#10;Nếu có đường dẫn (https://...) sẽ tự động phát hiện"></textarea>
+
+            <button type="button" id="btn-toggle-preview" class="btn-preview-toggle">👁 Xem trước</button>
+            <div id="msg-preview-box" class="msg-preview-box hidden">
+              <div class="msg-preview-label">Xem trước trên Zalo:</div>
+              <div id="msg-preview-content" class="msg-preview-content"></div>
+            </div>
+          </div>
+
+          <!-- Badge phát hiện link -->
+          <div id="link-preview" class="link-preview-box hidden">
+            <span>🔗 <strong>Phát hiện link:</strong> <span id="link-preview-text" style="word-break:break-all;"></span></span>
+            <button id="btn-clear-link" title="Bỏ link này">✕</button>
+          </div>
+          <div style="margin-top:8px;" id="link-title-wrap" class="hidden">
+            <label>Tiêu đề nút bấm (tuỳ chọn)</label>
+            <input type="text" id="link-title" placeholder="Xem thêm (để trống = mặc định)" />
+          </div>
+
+          <!-- Ghi chú -->
+          <div style="margin-top:12px;">
+            <label>Ghi chú (nội bộ)</label>
+            <input type="text" id="admin-note" placeholder="VD: Thông báo cắt nước ngày 20/5" />
+          </div>
+        </div>
+
+        <!-- ── Cột phải ── -->
+        <div style="display:flex;flex-direction:column;gap:12px;">
+
+          <!-- Người nhận cá nhân -->
+          <div>
+            <label>👤 Danh sách Zalo ID người nhận</label>
+            <div class="group-picker-wrap" style="margin-bottom:8px;">
+              <button type="button" class="group-picker-btn" id="follower-picker-btn">
+                <span id="follower-picker-label">Chọn từ danh sách Follower...</span>
+                <span id="follower-picker-arrow" style="font-size:11px;transition:transform .2s;">▾</span>
+              </button>
+              <div class="group-picker-dropdown" id="follower-picker-dropdown"></div>
+            </div>
+            <textarea id="recipient-ids" rows="5"
+              placeholder="Nhập danh sách ID, mỗi ID một dòng&#10;&#10;VD:&#10;1234567890&#10;9876543210"
+              style="min-height:100px;"></textarea>
+            <div style="margin-top:4px;font-size:12px;color:#888;" id="ids-count-users">0 người</div>
+          </div>
+
+          <!-- Nhóm nhận -->
+          <div>
+            <label>💬 Danh sách nhóm nhận</label>
+            <div class="group-picker-wrap" style="margin-bottom:8px;">
+              <button type="button" class="group-picker-btn" id="group-picker-btn">
+                <span id="group-picker-label">Chọn nhóm từ danh sách...</span>
+                <span id="group-picker-arrow" style="font-size:11px;transition:transform .2s;">▾</span>
+              </button>
+              <div class="group-picker-dropdown" id="group-picker-dropdown"></div>
+            </div>
+            <textarea id="recipient-groups" rows="3"
+              placeholder="Nhập Group ID, mỗi ID một dòng"
+              style="min-height:70px;"></textarea>
+            <div style="margin-top:4px;font-size:12px;color:#888;" id="ids-count-groups">0 nhóm</div>
+          </div>
+
+          <!-- Tổng + Buttons -->
+          <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+            <div style="font-size:13px;color:#555;font-weight:500;" id="ids-count">0 người nhận</div>
+          </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn-primary" id="btn-send">Gửi Tin Nhắn Ngay ✈</button>
+            <button class="btn-secondary" id="btn-clear-all">Xoá tất cả</button>
+          </div>
+
+          <!-- Progress -->
+          <div class="progress-wrap hidden" id="progress-wrap">
+            <div class="progress-bar-bg"><div class="progress-bar-fill" id="progress-fill"></div></div>
+            <div class="progress-text" id="progress-text">Đang gửi...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: FOLLOWER ═══ -->
+  <div id="tab-followers" class="hidden">
+    <div class="card">
+      <div class="sub-tabs">
+        <div class="sub-tab active" id="sub-tab-followers" data-subtab="followers">
+          👥 Followers <span class="badge-user" id="badge-follower-count">0</span>
+        </div>
+        <div class="sub-tab" id="sub-tab-groups" data-subtab="groups">
+          💬 Nhóm <span class="badge-group" id="badge-group-count">0</span>
+        </div>
+      </div>
+
+      <!-- Sub: Followers -->
+      <div id="sub-followers">
+        <div class="follower-header">
+          <div><span class="follower-count" id="follower-count-text"> — đang tải...</span></div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <input type="text" class="search-box" id="follower-search" placeholder="🔍 Tìm tên hoặc ID..." />
+            <button class="btn-primary" id="btn-sync" style="font-size:13px;padding:9px 16px;">↻ Đồng bộ</button>
+          </div>
+        </div>
+        <div class="select-all-row">
+          <input type="checkbox" id="chk-all" />
+          <label for="chk-all" style="margin:0;font-weight:400;cursor:pointer;">Chọn tất cả</label>
+          <button class="btn-secondary" style="padding:5px 14px;font-size:12px;" id="btn-add-selected-followers">
+            Thêm vào danh sách gửi
+          </button>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="follower-table">
+            <thead><tr><th></th><th>Người dùng</th><th>Zalo ID</th><th></th></tr></thead>
+            <tbody id="follower-tbody">
+              <tr><td colspan="4" style="text-align:center;padding:24px;color:#aaa;">Đang tải...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Sub: Nhóm -->
+      <div id="sub-groups" class="hidden">
+        <div style="background:#f0fff4;border:1px solid #9ae6b4;border-radius:10px;padding:14px 18px;margin-bottom:14px;font-size:13px;color:#276749;line-height:1.7;">
+          ✅ <strong>Tự động:</strong> Server sẽ tự nhận diện nhóm mới qua Zalo webhook.
+        </div>
+        <div style="margin-bottom:14px;">
+          <label>Dán URL nhóm từ OA Manager để tự lấy Group ID</label>
+          <div style="display:flex;gap:8px;margin-top:6px;">
+            <input type="text" id="group-url-input"
+              placeholder="VD: https://oa.zalo.me/chat?gid=bcff84bcd6de3f8066cf&oaid=..."
+              style="flex:1;padding:10px 12px;border:1.5px solid #dde3ef;border-radius:8px;font-size:13px;outline:none;" />
+            <button class="btn-secondary" id="btn-extract-gid" style="white-space:nowrap;padding:10px 16px;">Trích xuất</button>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:1;min-width:160px;">
+            <label style="margin-bottom:4px;">Tên nhóm (tuỳ chọn)</label>
+            <input type="text" id="new-group-name" placeholder="VD: Nhóm Test" style="width:100%;padding:10px 12px;border:1.5px solid #dde3ef;border-radius:8px;font-size:14px;outline:none;" />
+          </div>
+          <div style="flex:1.5;min-width:200px;">
+            <label style="margin-bottom:4px;">Group ID <span style="color:#e53e3e;">*</span></label>
+            <input type="text" id="new-group-id" placeholder="VD: bcff84bcd6de3f8066cf"
+              style="width:100%;padding:10px 12px;border:1.5px solid #dde3ef;border-radius:8px;font-size:14px;outline:none;font-family:monospace;" />
+          </div>
+          <button class="btn-primary" id="btn-add-group" style="padding:10px 20px;font-size:14px;white-space:nowrap;">+ Thêm nhóm</button>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div class="select-all-row" style="margin:0;">
+            <input type="checkbox" id="chk-all-groups" />
+            <label for="chk-all-groups" style="margin:0;font-weight:400;cursor:pointer;">Chọn tất cả</label>
+            <button class="btn-secondary" style="padding:5px 14px;font-size:12px;" id="btn-add-selected-groups">
+              Thêm vào danh sách gửi
+            </button>
+          </div>
+          <span class="follower-count" id="group-count-text">0 nhóm</span>
+        </div>
+        <div style="overflow-x:auto;">
+          <table class="follower-table">
+            <thead><tr><th></th><th>Tên nhóm</th><th>Group ID</th><th></th></tr></thead>
+            <tbody id="group-tbody">
+              <tr><td colspan="4" style="text-align:center;padding:24px;color:#aaa;">Chưa có nhóm.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ TAB: LỊCH SỬ ═══ -->
+  <div id="tab-logs" class="hidden">
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <span style="font-size:16px;font-weight:600;">Lịch sử gửi tin</span>
+        <button class="btn-secondary" id="btn-reload-logs">↻ Tải lại</button>
+      </div>
+      <div id="log-list"><p style="color:#aaa;text-align:center;padding:24px;">Đang tải...</p></div>
+    </div>
+  </div>
+
+</main>
+
+<div id="toast"></div>
+
+</body>
+</html>

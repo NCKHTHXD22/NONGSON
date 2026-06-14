@@ -1,0 +1,99 @@
+<%- include('../partials/_head', { title: 'Tài khoản Admin', user, activeMenu: 'users' }) %>
+
+<!-- Flash -->
+<% if (flash.error) { %>
+<div class="alert alert-danger alert-dismissible py-2 mb-3">
+  <i class="bi bi-exclamation-circle me-1"></i><%= flash.error %>
+  <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+<% if (flash.success) { %>
+<div class="alert alert-success alert-dismissible py-2 mb-3">
+  <i class="bi bi-check-circle me-1"></i><%= flash.success %>
+  <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+</div>
+<% } %>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-white d-flex align-items-center justify-content-between py-2">
+    <span class="fw-semibold" style="font-size:.9rem">
+      <i class="bi bi-people me-2 text-primary"></i>Tài khoản Admin (<%= users.length %>)
+    </span>
+    <a href="/admin/users/new" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Thêm tài khoản
+    </a>
+  </div>
+  <div class="card-body p-0">
+    <% if (users.length === 0) { %>
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-people" style="font-size:2.5rem"></i>
+      <p class="mt-2 mb-0">Chưa có tài khoản nào</p>
+    </div>
+    <% } else { %>
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th>#</th>
+            <th>Tên đăng nhập</th>
+            <th>Họ tên</th>
+            <th>Vai trò</th>
+            <th>Ngày tạo</th>
+            <th style="width:120px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <% users.forEach(function(u, i) { %>
+          <tr>
+            <td class="text-muted" style="font-size:.78rem"><%= i + 1 %></td>
+            <td>
+              <div class="d-flex align-items-center gap-2">
+                <div class="avatar-circle" style="width:30px;height:30px;font-size:.75rem">
+                  <i class="bi bi-person-fill text-white"></i>
+                </div>
+                <span class="fw-semibold" style="font-size:.875rem">@<%= u.username %></span>
+                <% if (u._id.toString() === user.id) { %>
+                <span class="badge bg-secondary" style="font-size:.68rem">bạn</span>
+                <% } %>
+              </div>
+            </td>
+            <td style="font-size:.875rem"><%= u.fullName %></td>
+            <td>
+              <% if (u.role === 'superadmin') { %>
+              <span class="badge" style="background:#fef3c7;color:#92400e;font-size:.75rem">
+                <i class="bi bi-shield-check me-1"></i>Quản trị viên
+              </span>
+              <% } else { %>
+              <span class="badge" style="background:#dbeafe;color:#1e40af;font-size:.75rem">
+                <i class="bi bi-person me-1"></i>Nhân viên
+              </span>
+              <% } %>
+            </td>
+            <td style="font-size:.82rem;color:#6b7280">
+              <%= new Date(u.createdAt).toLocaleDateString('vi-VN') %>
+            </td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="/admin/users/<%= u._id %>/edit" class="btn btn-sm btn-outline-secondary py-0" style="font-size:.78rem">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <% if (u._id.toString() !== user.id) { %>
+                <form method="POST" action="/admin/users/<%= u._id %>?_method=DELETE" class="d-inline">
+                  <button type="submit" class="btn btn-sm btn-outline-danger py-0" style="font-size:.78rem"
+                    onclick="return confirm('Xác nhận xóa tài khoản @<%= u.username %>?')">
+                    <i class="bi bi-trash"></i>
+                  </button>
+                </form>
+                <% } %>
+              </div>
+            </td>
+          </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../partials/_footer') %>

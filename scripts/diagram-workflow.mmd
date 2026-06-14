@@ -1,0 +1,65 @@
+graph TD
+    START(["👤 Cán bộ xã / thôn\nĐăng nhập hệ thống"])
+
+    subgraph UC_HO["📁 QUẢN LÝ HỒ SƠ"]
+        H1["UC01 — Thêm chủ hộ"]
+        H2["UC02 — Cập nhật chủ hộ"]
+        H3["UC03 — Xóa chủ hộ"]
+        H4["UC04 — Quản lý thành viên"]
+    end
+
+    subgraph UC_BIEN["🔄 BIẾN ĐỘNG DÂN CƯ"]
+        B1["UC05 — Tách hộ"]
+        B2["UC06 — Gộp hộ"]
+        B3["UC07 — Chuyển đến"]
+        B4["UC08 — Chuyển đi"]
+    end
+
+    subgraph UC_TRACUU["🔍 TRA CỨU & BÁO CÁO"]
+        T1["UC09 — Tìm kiếm\nTên · CCCD · SĐT"]
+        T2["UC11 — Báo cáo hộ dân"]
+        T3["UC12 — Xuất Excel / PDF"]
+        T4["UC14 — Bản đồ số\nLeaflet · OpenStreetMap"]
+    end
+
+    subgraph UC_ADMIN["⚙️ QUẢN TRỊ HỆ THỐNG"]
+        A1["UC10 — Quản lý thôn"]
+        A2["UC13 — Phân quyền\nsuperadmin · xa_admin\nthon_admin · viewer"]
+        A3["UC15 — Lịch sử / Audit Log"]
+    end
+
+    DB[("🗄️ MongoDB Atlas hoặc PostgreSQL\n+ Redis Cache")]
+    LOG["📜 AuditLog\nGhi snapshot trước & sau mọi thay đổi"]
+
+    START --> UC_HO & UC_BIEN & UC_TRACUU & UC_ADMIN
+    UC_HO & UC_BIEN & UC_TRACUU & UC_ADMIN --> DB
+    DB --> LOG
+
+    ZA(["📱 Người dân\nnhắn Zalo OA"])
+    ZB{"Chọn cách\ntra cứu"}
+    ZC["① Nhập họ tên"]
+    ZD["② Nhập số CCCD"]
+    ZE["③ Nhập SĐT"]
+    ZF[/"Webhook POST /webhook"/]
+    ZG["State Machine\nxử lý yêu cầu"]
+    ZH{{"Tìm thấy\nhồ sơ?"}}
+    ZI(["✅ Trả kết quả\nTên · Thôn · Số nhân khẩu\nKHÔNG trả CCCD/SĐT"])
+    ZJ(["❌ Không tìm thấy\nhồ sơ phù hợp"])
+
+    ZA --> ZB
+    ZB --> ZC & ZD & ZE
+    ZC & ZD & ZE --> ZF --> ZG --> ZH
+    ZH -->|Có| ZI
+    ZH -->|Không| ZJ
+    ZG --> DB
+
+    style START fill:#1e40af,stroke:#1e3a8a,color:#ffffff
+    style UC_HO fill:#dcfce7,stroke:#16a34a,color:#14532d
+    style UC_BIEN fill:#fef9c3,stroke:#ca8a04,color:#713f12
+    style UC_TRACUU fill:#fce7f3,stroke:#db2777,color:#831843
+    style UC_ADMIN fill:#ede9fe,stroke:#7c3aed,color:#4c1d95
+    style DB fill:#f1f5f9,stroke:#475569,color:#1e293b
+    style LOG fill:#ecfeff,stroke:#06b6d4,color:#164e63
+    style ZA fill:#1e40af,stroke:#1e3a8a,color:#ffffff
+    style ZI fill:#166534,stroke:#15803d,color:#ffffff
+    style ZJ fill:#991b1b,stroke:#dc2626,color:#ffffff
