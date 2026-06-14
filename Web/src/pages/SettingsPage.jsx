@@ -12,6 +12,7 @@ function Avatar({ name, avatar, size = 8 }) {
       <img
         src={avatar}
         alt={name}
+        referrerPolicy="no-referrer"
         className={`h-${size} w-${size} rounded-full object-cover shrink-0`}
         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
       />

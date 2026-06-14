@@ -66,6 +66,10 @@ export default function Sidebar() {
         <p className="px-3 pb-2 text-[10px] font-bold uppercase tracking-widest text-white/25 select-none">
           Menu chính
         </p>
+        <div className="space-y-0.5">
+          <NavItem to="/dashboard" icon={LayoutDashboard} label="Tổng quan" />
+          <NavItem to="/feedbacks" icon={MessageSquare} label="Góp ý - Phản ánh" />
+        </div>
         {/* Quản trị — chỉ superadmin */}
         {user?.role === 'superadmin' && (
           <>

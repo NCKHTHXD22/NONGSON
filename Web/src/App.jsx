@@ -28,7 +28,7 @@ export default function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
-                <Route index element={<Navigate to="/messages" replace />} />
+                <Route index element={<Navigate to="/dashboard" replace />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
                 <Route path="/feedbacks" element={<FeedbacksPage />} />
                 <Route path="/feedbacks/:id" element={<FeedbackDetailPage />} />

@@ -215,6 +215,7 @@ export default function DashboardPage() {
                       <img
                         src={fb.avatar}
                         alt={name}
+                        referrerPolicy="no-referrer"
                         className="h-8 w-8 shrink-0 rounded-full object-cover shadow-sm"
                         onError={(e) => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
                       />

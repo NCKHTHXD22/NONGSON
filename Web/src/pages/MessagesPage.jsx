@@ -57,6 +57,7 @@ function FollowerAvatar({ f, size = 8 }) {
       <img
         src={f.avatar}
         alt={name}
+        referrerPolicy="no-referrer"
         className={`h-${size} w-${size} rounded-full object-cover shrink-0`}
         onError={e => { e.target.style.display = 'none'; e.target.nextSibling.style.display = 'flex' }}
       />
