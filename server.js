@@ -202,16 +202,13 @@ const adminRouter = require('./src/admin/routes/index');
 app.use('/admin', adminRouter);
 
 // ── Các route khác ──────────────────────────────────────
-app.get('/zalo_verifierMy2z1PYq6XmTWRKu-gqbEpgZaXZMrKT1CJCm.html', (req, res) => {
-  res.type('html').send('There Is No Limit To What You Can Accomplish Using Zalo!');
-});
-
-app.get('/zalo_verifierOFpW5E3FJ1Xguy4-eUrB0sVec1w8dar8EJ4r.html', (req, res) => {
-  res.type('html').send('There Is No Limit To What You Can Accomplish Using Zalo!');
-});
-
-app.get('/zalo_verifierOFpW5E3FJ1Xguy4-eUrB0sVec1wBdar8EJ4r.html', (req, res) => {
-  res.sendFile(path.join(__dirname, 'zalo_verifierOFpW5E3FJ1Xguy4-eUrB0sVec1wBdar8EJ4r.html'));
+app.get('/zalo_verifier*.html', (req, res) => {
+  const token = req.path.match(/\/zalo_verifier(.*)\.html/);
+  if (token && token[1]) {
+    res.type('html').send(`<!DOCTYPE html><html><head><meta property="zalo-platform-site-verification" content="${token[1]}" /></head><body>There Is No Limit To What You Can Accomplish Using Zalo!</body></html>`);
+  } else {
+    res.type('html').send('There Is No Limit To What You Can Accomplish Using Zalo!');
+  }
 });
 
 app.get('/', async (req, res) => {
