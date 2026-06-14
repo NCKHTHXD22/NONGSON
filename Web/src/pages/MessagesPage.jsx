@@ -72,10 +72,10 @@ function FollowerAvatar({ f, size = 8 }) {
 // ── Tab bar ────────────────────────────────────────────────────────────────────
 function TabBar({ active, onChange }) {
   const tabs = [
-    { id: 'send',      label: 'Gửi tin nhắn', icon: Send },
+    { id: 'send', label: 'Gửi tin nhắn', icon: Send },
     { id: 'followers', label: 'Followers & Nhóm', icon: Users },
-    { id: 'logs',      label: 'Lịch sử gửi', icon: History },
-    { id: 'schedule',  label: 'Lên lịch', icon: CalendarClock },
+    { id: 'logs', label: 'Lịch sử gửi', icon: History },
+    { id: 'schedule', label: 'Lên lịch', icon: CalendarClock },
   ]
   return (
     <div className="flex gap-1 rounded-2xl bg-slate-100 p-1">
@@ -104,8 +104,8 @@ function AttachTypeTabs({ active, onChange }) {
     <div className="flex gap-1 rounded-xl bg-slate-100 p-1 mb-3">
       {[
         { id: 'image', label: 'Hình ảnh', icon: Image },
-        { id: 'video', label: 'Video',    icon: Video },
-        { id: 'file',  label: 'File',     icon: FileText },
+        { id: 'video', label: 'Video', icon: Video },
+        { id: 'file', label: 'File', icon: FileText },
       ].map(({ id, label, icon: Icon }) => (
         <button
           key={id}
@@ -615,7 +615,7 @@ function FollowersTab() {
     },
     onError: (e) => {
       const code = e.response?.data?.code
-      const msg  = e.response?.data?.error || 'Lỗi đồng bộ'
+      const msg = e.response?.data?.error || 'Lỗi đồng bộ'
       if (code === 'TOKEN_EXPIRED') {
         setTokenExpired(true)
         toast.error('Token Zalo hết hạn — cập nhật token để tiếp tục')
@@ -673,7 +673,7 @@ function FollowersTab() {
         toast.success(`Đã tự động thêm ${count} nhóm từ danh mục`)
       }
     },
-    onError: () => {},
+    onError: () => { },
   })
 
   // Tự động import nhóm từ danh mục khi groups rỗng
@@ -794,7 +794,7 @@ function FollowersTab() {
                           <td className="py-2 font-mono text-xs text-slate-500">{f.user_id}</td>
                           <td className="py-2">
                             <button
-                              onClick={() => navigator.clipboard.writeText(f.user_id).then(() => {})}
+                              onClick={() => navigator.clipboard.writeText(f.user_id).then(() => { })}
                               className="rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:bg-slate-100 transition-colors"
                               title="Sao chép ID"
                             >
@@ -1045,17 +1045,17 @@ function LogsTab() {
 
 // ── helpers cho ScheduleTab ───────────────────────────────────────────────────
 const STATUS_LABEL = {
-  pending:   { text: 'Chờ gửi',   cls: 'bg-blue-100 text-blue-700' },
-  sending:   { text: 'Đang gửi',  cls: 'bg-amber-100 text-amber-700' },
-  done:      { text: 'Đã gửi',    cls: 'bg-green-100 text-green-700' },
-  failed:    { text: 'Thất bại',  cls: 'bg-red-100 text-red-700' },
-  cancelled: { text: 'Đã hủy',   cls: 'bg-slate-100 text-slate-500' },
+  pending: { text: 'Chờ gửi', cls: 'bg-blue-100 text-blue-700' },
+  sending: { text: 'Đang gửi', cls: 'bg-amber-100 text-amber-700' },
+  done: { text: 'Đã gửi', cls: 'bg-green-100 text-green-700' },
+  failed: { text: 'Thất bại', cls: 'bg-red-100 text-red-700' },
+  cancelled: { text: 'Đã hủy', cls: 'bg-slate-100 text-slate-500' },
 }
 
 function toLocalDatetimeValue(date) {
   const d = new Date(date)
   const pad = n => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
 // ── ScheduleTab ────────────────────────────────────────────────────────────────
