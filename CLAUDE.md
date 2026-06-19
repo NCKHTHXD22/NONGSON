@@ -63,3 +63,28 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 ---
 
 **These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
+
+---
+
+## Project-specific: Zalo OA – UBND Nông Sơn
+
+- `Backend/` — Express API + webhook Zalo OA. Entry point: `Backend/server.js`. Code chính ở `Backend/src/` (`routes/`, `services/`, `models/`, `middleware/`, `admin/` — dashboard EJS riêng tại `/admin`, song song với REST API tại `/api` mà Frontend gọi).
+- `Frontend/Web/` — SPA React (Vite + Tailwind + Radix), deploy Vercel, gọi Backend qua `VITE_API_URL`.
+- `Documents/` — tài liệu vận hành, không phải code. `Documents/DEPLOY.md` là quy trình deploy Backend lên VPS (dùng chung cho nhiều dự án xã trên cùng 1 VPS). `Documents/AI_CONTEXT.md` là nhật ký ngữ cảnh dự án từ các phiên làm việc trước.
+- Codebase có nguồn gốc clone từ `QUESON` → `VUGIA` → `NONGSON` — một số tên biến/comment cũ có thể còn sót lại từ các bản trước, không phải lỗi.
+
+### Lệnh hay dùng
+
+```bash
+cd Backend && npm run dev        # nodemon, đọc Backend/.env (dotenv load theo cwd, không phải __dirname)
+cd Frontend/Web && npm run dev   # Vite dev server
+```
+
+### Gotcha quan trọng
+
+- **Không chạy `node server.js` ở Backend/ một cách tuỳ tiện để "test"** — `.env` hiện tại trỏ vào MongoDB Atlas/Upstash Redis/Zalo OA token **thật** (production), và `schedulerService` tự khởi động cron mỗi phút khi server start (gửi tin lên lịch + cào lịch cắt điện EVNCPC). Job lên lịch dùng atomic claim (`findOneAndUpdate` theo status) nên an toàn nếu có 2 instance cùng chạy (VPS + Render trong giai đoạn cutover), nhưng vẫn nên tránh chạy thừa instance không cần thiết.
+- **Upload runtime** (`Backend/public/images/`) là thư mục lưu ảnh/video người dùng gửi qua broadcast — bị gitignore, không phải static asset của frontend.
+- **`.env` nằm ở `Backend/.env`**, không phải ở root. `dotenv.config()` load theo `process.cwd()`, nên luôn chạy backend với cwd = `Backend/` (npm script, hoặc `pm2 start ... --cwd .../Backend`).
+- VPS chạy chung nhiều app (xem `Documents/DEPLOY.md`) — khi đổi cấu trúc thư mục hay port, phải `pm2 delete` rồi `pm2 start` lại với `--cwd` mới, **không** dùng `pm2 restart` (nó không cập nhật lại script path/cwd cũ).
+- Tài khoản admin mặc định được seed tự động khi DB rỗng (`admin` / `admin@2025`, xem `server.js`) — đổi ngay sau khi có quyền truy cập DB mới.
+- `Backend/public/admin/` là bundle build cũ, không còn được route nào tham chiếu (`server.js` hiện serve frontend qua `Web/dist`, không qua `public/admin`) — có thể dọn sau khi xác nhận không còn cần.

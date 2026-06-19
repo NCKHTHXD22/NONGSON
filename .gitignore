@@ -1,7 +1,12 @@
 node_modules/
-admin-ui/node_modules/
-admin-ui/dist/
 .env
-public/images/
-data/
+.env.*
 *.log
+data/
+
+# Backend runtime uploads (ảnh/video người dùng gửi lên, không commit)
+Backend/public/images/*
+!Backend/public/images/.gitkeep
+
+# Frontend build output
+Frontend/Web/dist/
