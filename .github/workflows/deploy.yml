@@ -1,0 +1,28 @@
+name: Deploy to VPS
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: SSH vào VPS và deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_PRIVATE_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script: |
+            set -e
+            cd ${{ secrets.VPS_APP_DIR }}
+            git fetch origin main
+            git reset --hard origin/main
+            cd Backend && npm install --omit=dev && cd ..
+            pm2 delete nongson-backend 2>/dev/null || true
+            pm2 start server.js --name nongson-backend --cwd ${{ secrets.VPS_APP_DIR }}/Backend
+            pm2 save
+            echo "✅ Deploy xong: $(date)"
