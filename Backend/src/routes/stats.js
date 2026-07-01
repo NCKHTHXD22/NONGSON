@@ -7,8 +7,8 @@ router.get('/', async (req, res) => {
     const [total, pending, processing, done] = await Promise.all([
       Feedback.countDocuments(),
       Feedback.countDocuments({ status: 'pending' }),
-      Feedback.countDocuments({ status: 'processing' }),
-      Feedback.countDocuments({ status: 'done' }),
+      Feedback.countDocuments({ status: { $in: ['processing', 'draft'] } }),
+      Feedback.countDocuments({ status: { $in: ['done', 'resolved'] } }),
     ])
 
     const recent = await Feedback.find()
