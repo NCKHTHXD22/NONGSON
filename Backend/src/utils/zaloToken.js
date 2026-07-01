@@ -88,15 +88,19 @@ async function refreshAccessToken() {
     console.log('[ZaloToken] Đọc refresh token từ Redis');
   }
 
-  try {
-    await refreshAccessToken();
-    console.log('[ZaloToken] Khởi động: Lấy access token mới thành công');
-  } catch (err) {
-    console.error('[ZaloToken] Khởi động: Không thể refresh:', err.message);
-    if (_accessToken) {
-      console.warn('[ZaloToken] Dùng token hiện có làm fallback, retry sau 10 phút');
+  if (_accessToken) {
+    // Dùng token từ Redis ngay, không refresh khi startup để tránh mất scope (GMF, v.v.)
+    // Token sẽ được refresh tự động khi hết hạn (-216) hoặc theo lịch proactive
+    scheduleRefresh(EXPIRES_IN_MS - REFRESH_BEFORE_MS);
+    console.log('[ZaloToken] Khởi động: Dùng token từ Redis, proactive refresh đã lên lịch');
+  } else {
+    try {
+      await refreshAccessToken();
+      console.log('[ZaloToken] Khởi động: Không có token trong Redis, đã lấy mới thành công');
+    } catch (err) {
+      console.error('[ZaloToken] Khởi động: Không thể lấy token:', err.message);
+      scheduleRefresh(10 * 60 * 1000);
     }
-    scheduleRefresh(10 * 60 * 1000);
   }
 })();
 
