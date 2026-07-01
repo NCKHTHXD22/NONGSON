@@ -12,6 +12,7 @@ function isLookupTrigger(text) {
   return (
     lower === '#tracuugoopy' ||
     lower === '#theodoi' ||
+    lower === '#theodoiphananh' ||
     lower.includes('theo dõi phản ánh') ||
     lower.includes('theo doi phan anh') ||
     lower.includes('tra cứu góp ý') ||
