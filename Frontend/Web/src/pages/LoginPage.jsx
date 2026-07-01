@@ -1,10 +1,11 @@
 import { Suspense, lazy, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
-import { Building2, Eye, EyeOff, Loader2, Lock, User, ArrowLeft, KeyRound, ShieldCheck } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Lock, User, ArrowLeft, KeyRound, ShieldCheck } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
+import logoImg from '@/images/LogoNongSon.jpg'
 
 const GlobeHero = lazy(() => import('@/components/login/GlobeHero'))
 
@@ -97,8 +98,14 @@ export default function LoginPage() {
       <div className="relative z-[4] w-full max-w-sm mr-8 lg:mr-16 xl:mr-24 my-8">
         {/* Logo */}
         <div className="flex flex-col items-center mb-6">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 shadow-2xl shadow-blue-900/50 mb-3">
-            <Building2 className="h-7 w-7 text-white" />
+          <div
+            className="h-16 w-16 rounded-full overflow-hidden mb-3 bg-[#0c1a42]"
+            style={{
+              border: '2px solid rgba(37, 99, 235, 0.45)',
+              boxShadow: '0 6px 22px rgba(0, 0, 0, 0.55), 0 0 18px rgba(37, 99, 235, 0.25)',
+            }}
+          >
+            <img src={logoImg} alt="Logo UBND Xã Nông Sơn" className="h-full w-full object-cover" />
           </div>
           <h2 className="text-white text-xl font-extrabold tracking-tight">UBND Xã Nông Sơn</h2>
           <p className="text-blue-300/70 text-xs mt-1">Hệ thống quản lý góp ý - phản ánh</p>

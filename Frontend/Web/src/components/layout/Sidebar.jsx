@@ -1,7 +1,8 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, MessageSquare, Users, LogOut, Settings, Building2, Send, FileBarChart2 } from 'lucide-react'
+import { LayoutDashboard, MessageSquare, Users, LogOut, Settings, Send, FileBarChart2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
+import logoImg from '@/images/LogoNongSon.jpg'
 
 const ROLE_LABELS = {
   superadmin:  'Cán bộ quản trị',
@@ -44,7 +45,7 @@ export default function Sidebar() {
   return (
     <aside
       className="fixed inset-y-0 left-0 z-50 flex w-64 flex-col"
-      style={{ background: 'linear-gradient(180deg, #0d1b2a 0%, #0f2336 60%, #112840 100%)' }}
+      style={{ background: 'linear-gradient(180deg, #0c1a42 0%, #16348a 35%, #1d4ed8 70%, #0c1a42 100%)' }}
     >
       {/* Decorative circles */}
       <div className="pointer-events-none absolute -top-12 -left-12 h-40 w-40 rounded-full bg-blue-600/10" />
@@ -52,8 +53,8 @@ export default function Sidebar() {
 
       {/* Brand */}
       <div className="relative flex items-center gap-3 px-5 py-5 border-b border-white/8">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 shadow-lg shadow-blue-800/40">
-          <Building2 className="h-5 w-5 text-white" />
+        <div className="h-11 w-11 shrink-0 rounded-full overflow-hidden shadow-lg shadow-blue-900/40 ring-2 ring-white/15">
+          <img src={logoImg} alt="Logo UBND Xã Nông Sơn" className="h-full w-full object-cover" />
         </div>
         <div className="min-w-0">
           <p className="text-white text-sm font-bold leading-tight truncate">UBND Xã Nong Son</p>
