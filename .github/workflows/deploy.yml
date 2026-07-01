@@ -25,28 +25,6 @@ jobs:
             grep -q "^ZALO_ASSET_ID=" Backend/.env \
               && sed -i "s|^ZALO_ASSET_ID=.*|ZALO_ASSET_ID=3015917682781745837|" Backend/.env \
               || echo "ZALO_ASSET_ID=3015917682781745837" >> Backend/.env
-            grep -q "^ZALO_OA_TOKEN=" Backend/.env \
-              && sed -i "s|^ZALO_OA_TOKEN=.*|ZALO_OA_TOKEN=WhbDBAuYr2MAkKejhIpI98o-J2wsLeXxwPTUSQfObX3kW7vljqE00EQhJLM7S8q7gxDaUinIZXM9WLS1n4sV2BEVS73-MOWvliWMLSr7-mIpaH5Kw0hLCfx97cVF6_KikTmS8yWJoNA4voi_mZpJPRdhB6sS7xaIlU9jMyGqzbQMynmjtIZZPwN3UJNt5B1hgCLTPzHMY2grhNLHn6gg0QA-AttOVl8qd-ayKkfcqYcGdHKfwGtG8y_rHLIGFgGKnUbbO_moyHMvn3mV-b_44DcVF1pwVyD6egmMFSLdz4pad1e6bc70LBlw0ndiFV19cUmF9BKwx2xhpIX5gGNo6SkAE1IsIVqUnOy8L8XtbnxUlNr8g56x9CJ4V6gqEQe4pVDJMwCoXGhH_4j5bMUD6kUgKWw1Vxq7GnIYh3cYDTaZ|" Backend/.env \
-              || echo "ZALO_OA_TOKEN=WhbDBAuYr2MAkKejhIpI98o-J2wsLeXxwPTUSQfObX3kW7vljqE00EQhJLM7S8q7gxDaUinIZXM9WLS1n4sV2BEVS73-MOWvliWMLSr7-mIpaH5Kw0hLCfx97cVF6_KikTmS8yWJoNA4voi_mZpJPRdhB6sS7xaIlU9jMyGqzbQMynmjtIZZPwN3UJNt5B1hgCLTPzHMY2grhNLHn6gg0QA-AttOVl8qd-ayKkfcqYcGdHKfwGtG8y_rHLIGFgGKnUbbO_moyHMvn3mV-b_44DcVF1pwVyD6egmMFSLdz4pad1e6bc70LBlw0ndiFV19cUmF9BKwx2xhpIX5gGNo6SkAE1IsIVqUnOy8L8XtbnxUlNr8g56x9CJ4V6gqEQe4pVDJMwCoXGhH_4j5bMUD6kUgKWw1Vxq7GnIYh3cYDTaZ" >> Backend/.env
-            grep -q "^ZALO_REFRESH_TOKEN=" Backend/.env \
-              && sed -i "s|^ZALO_REFRESH_TOKEN=.*|ZALO_REFRESH_TOKEN=nOiwSvfp7N7DYprocNqRSCkCEt62U7rraDGQ7fnlK1Z9oYe7wsHkKVkS4b7LEMSbzOmX8z0UHLJqk2uvoXPsSVIo4XN7051jz8ij1VGZUc7tYoqXzd9vFllS0rtuRIHUvzHaDhHX4KA4c3KrhZvbIf2cCJEaDLbsffKyAv0iNax3c3inr7HeTDM1DmpeDquDrwa9HT4wM0VRdXnPqYTgBysLBY_fELfsvheb7iO9Jrl0h19Sb5zh0RV9GNs2LsSstFaSAVfYIcZ4bseCx34x2S6HGs_g1XLmpgjK9lWR7qJojsOaoYyTBfxTFYgrIKfDayiRIA5EU0c2sYjUgN9I3g3tDLwlHKO3hkOQLF56E3oaorrNj3W14k6iQN2m6Xuul8fsR-no22wur2zajN1x7c9dmH8obcGGTm|" Backend/.env \
-              || echo "ZALO_REFRESH_TOKEN=nOiwSvfp7N7DYprocNqRSCkCEt62U7rraDGQ7fnlK1Z9oYe7wsHkKVkS4b7LEMSbzOmX8z0UHLJqk2uvoXPsSVIo4XN7051jz8ij1VGZUc7tYoqXzd9vFllS0rtuRIHUvzHaDhHX4KA4c3KrhZvbIf2cCJEaDLbsffKyAv0iNax3c3inr7HeTDM1DmpeDquDrwa9HT4wM0VRdXnPqYTgBysLBY_fELfsvheb7iO9Jrl0h19Sb5zh0RV9GNs2LsSstFaSAVfYIcZ4bseCx34x2S6HGs_g1XLmpgjK9lWR7qJojsOaoYyTBfxTFYgrIKfDayiRIA5EU0c2sYjUgN9I3g3tDLwlHKO3hkOQLF56E3oaorrNj3W14k6iQN2m6Xuul8fsR-no22wur2zajN1x7c9dmH8obcGGTm" >> Backend/.env
-            # Seed token từ .env (đã cập nhật ở trên) vào Redis để server restart đọc ngay
-            UPSTASH_URL=$(grep "^UPSTASH_REDIS_REST_URL=" Backend/.env | cut -d= -f2- | tr -d '"')
-            UPSTASH_TOKEN=$(grep "^UPSTASH_REDIS_REST_TOKEN=" Backend/.env | cut -d= -f2- | tr -d '"')
-            OA_TOKEN=$(grep "^ZALO_OA_TOKEN=" Backend/.env | cut -d= -f2-)
-            REFRESH_TOKEN=$(grep "^ZALO_REFRESH_TOKEN=" Backend/.env | cut -d= -f2-)
-            if [ -n "$UPSTASH_URL" ] && [ -n "$OA_TOKEN" ]; then
-              curl -s -X POST "$UPSTASH_URL" \
-                -H "Authorization: Bearer $UPSTASH_TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "[\"SET\",\"nongson_zalo_access_token\",\"$OA_TOKEN\"]" > /dev/null
-              curl -s -X POST "$UPSTASH_URL" \
-                -H "Authorization: Bearer $UPSTASH_TOKEN" \
-                -H "Content-Type: application/json" \
-                -d "[\"SET\",\"nongson_zalo_refresh_token\",\"$REFRESH_TOKEN\"]" > /dev/null
-              echo "✅ Đã seed Zalo token vào Redis"
-            fi
             cd Backend && npm install --omit=dev && cd ..
             pm2 delete nongson-backend 2>/dev/null || true
             pm2 start server.js --name nongson-backend --cwd ${{ secrets.VPS_APP_DIR }}/Backend
