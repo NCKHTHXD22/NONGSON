@@ -1,12 +1,27 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { Search, Menu, X } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import Sidebar from './Sidebar'
 import NotificationBell from './NotificationBell'
+import logoImg from '@/images/LogoNongSon.jpg'
+
+const PAGE_TITLES = {
+  '/dashboard': { title: 'Tổng quan', subtitle: 'Thống kê & theo dõi góp ý người dân' },
+  '/feedbacks':  { title: 'Góp ý & Phản ánh', subtitle: 'Danh sách và xử lý phản ánh' },
+  '/users':      { title: 'Tài khoản Admin', subtitle: 'Quản lý tài khoản cán bộ' },
+}
+
+function getHourGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Chào buổi sáng'
+  if (h < 18) return 'Chào buổi chiều'
+  return 'Chào buổi tối'
+}
 
 export default function AppLayout() {
   const { user } = useAuth()
+  const location = useLocation()
   const navigate = useNavigate()
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [searchValue, setSearchValue] = useState('')
@@ -16,6 +31,9 @@ export default function AppLayout() {
     const q = searchValue.trim()
     if (q) navigate(`/feedbacks?q=${encodeURIComponent(q)}`)
   }
+
+  const basePath = '/' + location.pathname.split('/')[1]
+  const page = PAGE_TITLES[basePath] ?? { title: 'Trang', subtitle: '' }
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
@@ -39,7 +57,20 @@ export default function AppLayout() {
           <div className="pointer-events-none absolute bottom-0 right-32 h-32 w-32 rounded-full bg-cyan-400/10" />
           <div className="pointer-events-none absolute -bottom-6 left-1/3 h-20 w-20 rounded-full bg-blue-300/10" />
 
-          <div className="relative px-6 py-4 flex items-center justify-end gap-4">
+          <div className="relative px-6 py-4 flex items-center justify-between gap-4">
+            {/* Left: logo + greeting + page title */}
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="h-9 w-9 shrink-0 rounded-full overflow-hidden">
+                <img src={logoImg} alt="Logo" className="h-full w-full object-cover" />
+              </div>
+              <div className="min-w-0">
+                <h1 className="text-white font-bold text-lg leading-tight">
+                  {getHourGreeting()}, <span className="text-blue-100">{user?.fullName?.split(' ').pop() ?? 'Admin'}</span>!
+                </h1>
+                <p className="text-blue-200/80 text-xs mt-0.5 truncate">{page.subtitle}</p>
+              </div>
+            </div>
+
             {/* Right: search + notifications + user */}
             <div className="flex items-center gap-3 shrink-0">
               {/* Search (hidden on small screens) */}

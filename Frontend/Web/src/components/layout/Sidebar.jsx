@@ -5,10 +5,10 @@ import { cn } from '@/lib/utils'
 import logoImg from '@/images/LogoNongSon.jpg'
 
 const ROLE_LABELS = {
-  superadmin: 'Cán bộ quản trị',
+  superadmin:  'Cán bộ quản trị',
   dept_leader: 'Cán bộ phòng ban',
-  officer: 'Cán bộ phụ trách',
-  staff: 'Nhân viên',
+  officer:     'Cán bộ phụ trách',
+  staff:       'Nhân viên',
 }
 
 function NavItem({ to, icon: Icon, label }) {
@@ -57,8 +57,8 @@ export default function Sidebar() {
           <img src={logoImg} alt="Logo UBND Xã Nông Sơn" className="h-full w-full object-cover" />
         </div>
         <div className="min-w-0">
-          <p className="text-white text-sm font-bold leading-tight truncate">UBND Xã Nông Sơn</p>
-          <p className="text-blue-400/70 text-[11px] mt-0.5">Hệ thống tiếp nhận Phản ánh góp ý và Gửi thông tin thông báo, cảnh báo đến người dân</p>
+          <p className="text-white text-sm font-bold leading-tight truncate">UBND Xã Nong Son</p>
+          <p className="text-blue-400/70 text-[11px] mt-0.5">Hệ thống gửi thông tin và quản lý</p>
         </div>
       </div>
 
@@ -92,7 +92,7 @@ export default function Sidebar() {
               Quản trị
             </p>
             <div className="space-y-0.5">
-              <NavItem to="/users" icon={Users} label="Tài khoản Admin" />
+              <NavItem to="/users"    icon={Users}    label="Tài khoản Admin" />
               <NavItem to="/settings" icon={Settings} label="Cài đặt nhóm Zalo" />
             </div>
           </>
