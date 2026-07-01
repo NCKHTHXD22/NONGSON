@@ -424,6 +424,15 @@ export default function SettingsPage() {
     onError: (e) => toast.error(e.response?.data?.error || 'Lỗi xóa nhóm'),
   })
 
+  const syncAllMutation = useMutation({
+    mutationFn: () => api.post('/api/categories/sync-all').then((r) => r.data),
+    onSuccess: (data) => {
+      toast.success(`Đồng bộ xong — ${data.total} nhóm, +${data.created} mới, ${data.membersSynced} thành viên`)
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
+    },
+    onError: (e) => toast.error(e.response?.data?.error || 'Lỗi đồng bộ'),
+  })
+
   const availableFollowers = useMemo(() => {
     const q = searchFollower.toLowerCase()
     return followers.filter(f => {
@@ -467,13 +476,24 @@ export default function SettingsPage() {
           </p>
         </div>
         {!showAddForm && (
-          <button
-            type="button"
-            onClick={() => setShowAddForm(true)}
-            className="flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors shrink-0"
-          >
-            <Plus className="h-4 w-4" /> Thêm nhóm
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => syncAllMutation.mutate()}
+              disabled={syncAllMutation.isPending}
+              className="flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg bg-slate-100 text-slate-600 hover:bg-slate-200 transition-colors shrink-0 disabled:opacity-50"
+            >
+              {syncAllMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              Đồng bộ từ Zalo
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAddForm(true)}
+              className="flex items-center gap-1.5 text-sm font-semibold px-3 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition-colors shrink-0"
+            >
+              <Plus className="h-4 w-4" /> Thêm nhóm
+            </button>
+          </div>
         )}
       </div>
 
