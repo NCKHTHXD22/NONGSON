@@ -436,6 +436,23 @@ function SendTab({ followers, groups, syncedAt }) {
                       />
                     </div>
                   </div>
+                  {filteredFollowers.length > 0 && (
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100">
+                      <span className="text-[11px] text-slate-400">{filteredFollowers.length} follower</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedFollowers(prev => {
+                          const next = new Set(prev)
+                          const allSelected = filteredFollowers.every(f => next.has(f.user_id))
+                          filteredFollowers.forEach(f => allSelected ? next.delete(f.user_id) : next.add(f.user_id))
+                          return next
+                        })}
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                      >
+                        {filteredFollowers.every(f => selectedFollowers.has(f.user_id)) ? 'Bỏ chọn tất cả' : 'Chọn tất cả'}
+                      </button>
+                    </div>
+                  )}
                   <div className="max-h-52 overflow-y-auto">
                     {filteredFollowers.length === 0 && (
                       <p className="py-4 text-center text-xs text-slate-400">
@@ -506,6 +523,21 @@ function SendTab({ followers, groups, syncedAt }) {
               </button>
               {groupPickerOpen && (
                 <div className="absolute left-0 right-0 top-full z-30 mt-1 rounded-xl border border-slate-200 bg-white shadow-lg">
+                  {groups?.length > 0 && (
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b border-slate-100">
+                      <span className="text-[11px] text-slate-400">{groups.length} nhóm</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGroupText(groups.map(g => g.group_id).join('\n'))
+                          setGroupPickerOpen(false)
+                        }}
+                        className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+                      >
+                        Chọn tất cả nhóm
+                      </button>
+                    </div>
+                  )}
                   <div className="max-h-52 overflow-y-auto">
                     {!groups?.length && <p className="py-4 text-center text-xs text-slate-400">Chưa có nhóm. Vào tab Followers để thêm nhóm.</p>}
                     {groups?.map(g => (
