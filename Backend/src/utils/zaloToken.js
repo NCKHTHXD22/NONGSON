@@ -3,6 +3,7 @@ const axios = require('axios');
 let _accessToken = process.env.ZALO_OA_TOKEN || '';
 let _refreshToken = process.env.ZALO_REFRESH_TOKEN || '';
 let _refreshTimer = null;
+let _refreshPromise = null;
 
 const EXPIRES_IN_MS = 90000 * 1000;
 const REFRESH_BEFORE_MS = 2 * 60 * 60 * 1000;
@@ -42,6 +43,16 @@ function scheduleRefresh(delayMs) {
 }
 
 async function refreshAccessToken() {
+  // Single-flight: Zalo refresh token chỉ dùng được 1 lần và bị xoay vòng mỗi
+  // lần refresh. Nếu nhiều lời gọi song song cùng refresh, chúng sẽ dùng cùng
+  // 1 refresh token cũ -> cái sau nhận -14014 (Invalid refresh token) và làm
+  // hỏng token đã lưu. Gộp mọi refresh đang chạy vào chung 1 promise.
+  if (_refreshPromise) return _refreshPromise;
+  _refreshPromise = _doRefreshAccessToken().finally(() => { _refreshPromise = null; });
+  return _refreshPromise;
+}
+
+async function _doRefreshAccessToken() {
   const appId = process.env.ZALO_APP_ID;
   const appSecret = process.env.ZALO_APP_SECRET;
   const refreshToken = _refreshToken || process.env.ZALO_REFRESH_TOKEN;

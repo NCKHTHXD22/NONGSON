@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react'
 import { createPortal } from 'react-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { Plus, Trash2, Loader2, Users, RefreshCw, Search, X, UserCheck, Check } from 'lucide-react'
-import { api } from '@/lib/api'
+import { Plus, Trash2, Loader2, Users, RefreshCw, Search, X, UserCheck, Check, Edit2 } from 'lucide-react'
 import { Card, CardContent, CardTitle } from '@/components/ui/card'
 import { toast } from 'sonner'
 
@@ -105,6 +103,29 @@ function CategoryCard({ cat, followers, onDelete }) {
   const [search, setSearch] = useState('')
   const [showPending, setShowPending] = useState(false)
 
+  const [isEditing, setIsEditing] = useState(false)
+  const [editForm, setEditForm] = useState({ 
+    name: cat.name, 
+    icon: cat.icon, 
+    zaloGroupId: cat.zaloGroupId || '', 
+    order: cat.order || 0 
+  })
+
+  const updateMutation = useMutation({
+    mutationFn: (data) => api.put(`/api/categories/${cat._id}`, data).then((r) => r.data),
+    onSuccess: () => {
+      toast.success('Đã cập nhật thông tin nhóm')
+      setIsEditing(false)
+      queryClient.invalidateQueries({ queryKey: ['categories'] })
+    },
+    onError: (e) => toast.error(e.response?.data?.error || 'Lỗi cập nhật'),
+  })
+
+  function handleEditSubmit(e) {
+    e.preventDefault()
+    updateMutation.mutate(editForm)
+  }
+
   const { data, isLoading } = useQuery({
     queryKey: ['zalo-members', cat._id],
     queryFn: () => api.get(`/api/zalo-members/${cat._id}`).then((r) => r.data),
@@ -193,18 +214,31 @@ function CategoryCard({ cat, followers, onDelete }) {
               </CardTitle>
               <code className="text-[11px] text-slate-400 bg-slate-50 px-1 rounded mt-0.5 inline-block">{cat.zaloGroupId}</code>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                if (window.confirm(`Xóa nhóm "${cat.name}"? Toàn bộ ${members.length} thành viên cũng sẽ bị xóa.`)) {
-                  onDelete(cat._id)
-                }
-              }}
-              className="p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors shrink-0"
-              title="Xóa nhóm"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            <div className="flex items-center gap-1 shrink-0">
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsEditing(prev => !prev)
+                }}
+                className={`p-1 rounded transition-colors ${isEditing ? 'text-blue-500 bg-blue-50' : 'text-slate-300 hover:text-blue-500 hover:bg-blue-50'}`}
+                title="Chỉnh sửa thông tin nhóm"
+              >
+                <Edit2 className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (window.confirm(`Xóa nhóm "${cat.name}"? Toàn bộ ${members.length} thành viên cũng sẽ bị xóa.`)) {
+                    onDelete(cat._id)
+                  }
+                }}
+                className="p-1 rounded text-slate-300 hover:text-red-500 hover:bg-red-50 transition-colors"
+                title="Xóa nhóm"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
 
           <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium inline-block">
@@ -238,6 +272,79 @@ function CategoryCard({ cat, followers, onDelete }) {
             </button>
           </div>
         </CardContent>
+
+        {isEditing && (
+          <div className="p-4 pt-4 space-y-3 border-t border-slate-100 bg-slate-50/40 rounded-b-xl">
+            <form onSubmit={handleEditSubmit} className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-500">Tên nhóm</label>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm(p => ({ ...p, name: e.target.value }))}
+                    required
+                    className="w-full h-8 px-2.5 rounded-md border border-slate-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-500">Thứ tự hiển thị (Order)</label>
+                  <input
+                    type="number"
+                    value={editForm.order}
+                    onChange={(e) => setEditForm(p => ({ ...p, order: parseInt(e.target.value) || 0 }))}
+                    required
+                    className="w-full h-8 px-2.5 rounded-md border border-slate-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-500">Zalo Group ID</label>
+                  <input
+                    type="text"
+                    value={editForm.zaloGroupId}
+                    onChange={(e) => setEditForm(p => ({ ...p, zaloGroupId: e.target.value }))}
+                    required
+                    className="w-full h-8 px-2.5 rounded-md border border-slate-200 bg-white text-xs font-mono focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[11px] font-semibold text-slate-500 block mb-1">Icon nhóm</label>
+                  <div className="flex gap-1 flex-wrap">
+                    {ICONS.slice(0, 5).map(ic => (
+                      <button
+                        key={ic}
+                        type="button"
+                        onClick={() => setEditForm(p => ({ ...p, icon: ic }))}
+                        className={`h-7 w-7 rounded text-xs transition-all ${editForm.icon === ic ? 'bg-blue-100 ring-2 ring-blue-400' : 'bg-white hover:bg-slate-100 border border-slate-200'}`}
+                      >
+                        {ic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing(false)}
+                  className="px-3 py-1 rounded text-xs text-slate-500 hover:bg-slate-100 hover:text-slate-700"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateMutation.isPending}
+                  className="flex items-center gap-1 px-3 py-1 rounded text-xs bg-blue-600 text-white font-semibold hover:bg-blue-700 disabled:opacity-50"
+                >
+                  {updateMutation.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : null}
+                  Lưu lại
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
       </Card>
 
       {open && (

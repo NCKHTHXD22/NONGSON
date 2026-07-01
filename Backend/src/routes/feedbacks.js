@@ -6,7 +6,7 @@ const AdminUser = require('../models/AdminUser')
 const Category = require('../models/Category')
 const Notification = require('../models/Notification')
 const requireRole = require('../middleware/requireRole')
-const { sendZaloText, sendZaloToGroup } = require('../utils/zaloApi')
+const { sendZaloText, sendZaloToGroup, sendAttachmentsToUser } = require('../utils/zaloApi')
 const { sendMail, buildFeedbackEmailHtml } = require('../utils/mailer')
 const { getProfiles } = require('../services/profileCache')
 const { uploadBufferGeneric } = require('../utils/cloudinary')
@@ -444,6 +444,67 @@ router.post('/:id/reply', requireRole('superadmin', 'dept_leader'), async (req, 
       status: 'resolved',
       updatedAt: new Date(),
     })
+    res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: err.message })
+  }
+})
+
+// POST /:id/resolve — superadmin tự xử lý: soạn & gửi thẳng cho dân, không cần phân công
+router.post('/:id/resolve', requireRole('superadmin'), async (req, res) => {
+  try {
+    const { finalResponse, note, images, video, file } = req.body
+    if (!finalResponse?.trim()) return res.status(400).json({ error: 'Vui lòng nhập nội dung phản hồi' })
+
+    const feedback = await Feedback.findById(req.params.id).populate('categoryId', 'name zaloGroupId').lean()
+    if (!feedback) return res.status(404).json({ error: 'Không tìm thấy góp ý' })
+    if (feedback.status === 'resolved') return res.status(400).json({ error: 'Phản ánh đã được giải quyết' })
+
+    const text = finalResponse.trim()
+    const shortCode = feedback._id.toString().slice(-5).toUpperCase()
+
+    const citizenMsg =
+      `📋 Mã phản ánh #${shortCode} đã hoàn tất xử lý\n` +
+      `${'─'.repeat(32)}\n` +
+      `${text}\n` +
+      `${'─'.repeat(32)}\n` +
+      `Cảm ơn bạn đã tin tưởng UBND Xã Nông Sơn!`
+    await sendZaloText(feedback.userId, citizenMsg)
+
+    const attach = {
+      note: note?.trim() || '',
+      images: images || [],
+      video: video?.url ? video : { url: '', name: '' },
+      file: file?.url ? file : { url: '', name: '' },
+    }
+    if (images?.length || video?.url || file?.url) {
+      await sendAttachmentsToUser(feedback.userId, attach)
+    }
+
+    // Admin vừa soạn vừa duyệt trong 1 bước — lưu cả draft lẫn phản hồi cuối để có lịch sử
+    await Feedback.findByIdAndUpdate(req.params.id, {
+      draftResponse: text,
+      draftBy: req.user.id,
+      draftAt: new Date(),
+      draftAttachments: { ...attach, sentBy: req.user.id, sentAt: new Date() },
+      finalResponse: text,
+      approvedBy: req.user.id,
+      respondedBy: req.user.id,
+      respondedAt: new Date(),
+      response: text,
+      sentAt: new Date(),
+      status: 'resolved',
+      updatedAt: new Date(),
+    })
+
+    const groupId = feedback.categoryId?.zaloGroupId
+    const msg =
+      `✅ PHẢN ÁNH ĐÃ XỬ LÝ & GỬI DÂN\n` +
+      `${'─'.repeat(28)}\n` +
+      `🆔 Mã: #${shortCode}\n` +
+      `🏷️ Loại: ${feedback.categoryId?.name || ''}`
+    await sendZaloToGroup(msg, groupId)
+
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: err.message })

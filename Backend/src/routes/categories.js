@@ -70,7 +70,7 @@ router.post('/create-zalo-group', requireRole('superadmin'), async (req, res) =>
 router.put('/:id', requireRole('superadmin'), async (req, res) => {
   try {
     const { name, zaloGroupId, icon, order } = req.body
-    await Category.findByIdAndUpdate(req.params.id, { name, zaloGroupId, icon, order })
+    await Category.findByIdAndUpdate(req.params.id, { name, zaloGroupId, icon, order: parseInt(order) || 0 })
     res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: err.message })

@@ -31,9 +31,12 @@ export default function FeedbackDetailPage() {
   const [rejectReason, setRejectReason] = useState('')
   const [assignAttach, setAssignAttach] = useState(EMPTY_ATTACH)
   const [draftAttach, setDraftAttach] = useState(EMPTY_ATTACH)
+  const [selfResponse, setSelfResponse] = useState('')
+  const [selfAttach, setSelfAttach] = useState(EMPTY_ATTACH)
 
   const isLeader = user?.role === 'superadmin' || user?.role === 'dept_leader'
   const isOfficer = user?.role === 'officer' || user?.role === 'staff'
+  const isSuperadmin = user?.role === 'superadmin'
 
   const { data, isLoading } = useQuery({
     queryKey: ['feedback', id],
@@ -89,6 +92,18 @@ export default function FeedbackDetailPage() {
     mutationFn: () => api.post(`/api/feedbacks/${id}/approve`, { finalResponse: draftText }).then((r) => r.data),
     onSuccess: () => { toast.success('Đã duyệt và gửi phản hồi cho dân qua Zalo'); invalidate() },
     onError: (e) => toast.error(e.response?.data?.error || 'Lỗi duyệt'),
+  })
+
+  const resolveMutation = useMutation({
+    mutationFn: () => api.post(`/api/feedbacks/${id}/resolve`, {
+      finalResponse: selfResponse,
+      note: selfAttach.note,
+      images: selfAttach.images,
+      video: selfAttach.video,
+      file: selfAttach.file,
+    }).then((r) => r.data),
+    onSuccess: () => { toast.success('Đã gửi phản hồi cho dân qua Zalo'); setSelfResponse(''); setSelfAttach(EMPTY_ATTACH); invalidate() },
+    onError: (e) => toast.error(e.response?.data?.error || 'Lỗi gửi phản hồi'),
   })
 
   const rejectMutation = useMutation({
@@ -380,6 +395,43 @@ export default function FeedbackDetailPage() {
                     Từ chối — Trả về cán bộ
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* SUPERADMIN: Tự xử lý — gửi thẳng cho dân, không cần phân công */}
+          {isSuperadmin && !isResolved && (
+            <Card className="border-emerald-200">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2 text-emerald-700">
+                  <Send className="h-4 w-4" /> Tự xử lý — Phản hồi trực tiếp
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <p className="text-xs text-slate-500">
+                  Soạn phản hồi và gửi thẳng cho người dân qua Zalo, không cần phân công cán bộ.
+                </p>
+                <Textarea
+                  rows={5}
+                  placeholder="Nhập nội dung phản hồi gửi người dân..."
+                  value={selfResponse}
+                  onChange={(e) => setSelfResponse(e.target.value)}
+                />
+                <div className="border-t pt-3">
+                  <p className="text-xs text-slate-500 mb-2">Đính kèm gửi kèm người dân (tuỳ chọn):</p>
+                  <AttachmentComposer value={selfAttach} onChange={setSelfAttach} disabled={resolveMutation.isPending} />
+                </div>
+                <Button
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => {
+                    if (!selfResponse.trim()) { toast.error('Vui lòng nhập nội dung phản hồi'); return }
+                    if (window.confirm('Gửi phản hồi này trực tiếp cho người dân qua Zalo?')) resolveMutation.mutate()
+                  }}
+                  disabled={resolveMutation.isPending}
+                >
+                  {resolveMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                  Gửi phản hồi cho dân
+                </Button>
               </CardContent>
             </Card>
           )}

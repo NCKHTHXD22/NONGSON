@@ -62,11 +62,11 @@ async function uploadImageToZalo(filepath) {
   return uploadImageBufferToZalo(buffer, filename);
 }
 
-// Upload file (docx/pdf/xlsx) to Zalo, returns file token
-async function uploadFileToZalo(filepath, originalFilename) {
+// Upload file buffer (docx/pdf/xlsx) to Zalo, returns file token
+async function uploadFileBufferToZalo(buffer, originalFilename) {
   const FormData = require('form-data');
   const form = new FormData();
-  form.append('file', fs.createReadStream(filepath), { filename: originalFilename });
+  form.append('file', buffer, { filename: originalFilename || 'file' });
 
   const doUpload = (token) =>
     axios.post('https://openapi.zalo.me/v2.0/oa/upload/file', form, {
@@ -82,6 +82,49 @@ async function uploadFileToZalo(filepath, originalFilename) {
   const token = res.data?.data?.token;
   if (!token) throw new Error('Không lấy được file token từ Zalo');
   return token;
+}
+
+// Upload file (docx/pdf/xlsx) to Zalo from local path, returns file token
+async function uploadFileToZalo(filepath, originalFilename) {
+  const buffer = fs.readFileSync(filepath);
+  return uploadFileBufferToZalo(buffer, originalFilename || path.basename(filepath));
+}
+
+// Gửi đính kèm đang lưu trên Cloudinary (ảnh/file/video) tới 1 user qua Zalo.
+// Ảnh & file phải được tải về buffer rồi upload lên Zalo mới gửi được; video OA
+// không gửi trực tiếp nên gửi dưới dạng link. Mỗi loại lỗi độc lập (best-effort).
+async function sendAttachmentsToUser(userId, attachments = {}) {
+  const { images = [], video = null, file = null } = attachments;
+
+  const attachmentIds = [];
+  for (const img of images) {
+    if (!img?.url) continue;
+    try {
+      const { data } = await axios.get(img.url, { responseType: 'arraybuffer', timeout: 20000 });
+      attachmentIds.push(await uploadImageBufferToZalo(Buffer.from(data), img.name || 'image.jpg'));
+    } catch (err) {
+      console.error('[Zalo] Chuẩn bị ảnh gửi dân thất bại:', err.message);
+    }
+  }
+  if (attachmentIds.length) await sendZaloImages(userId, attachmentIds);
+
+  if (file?.url) {
+    try {
+      const { data } = await axios.get(file.url, { responseType: 'arraybuffer', timeout: 20000 });
+      const token = await uploadFileBufferToZalo(Buffer.from(data), file.name || 'file');
+      await sendZaloFile(userId, token);
+    } catch (err) {
+      console.error('[Zalo] Gửi file cho dân thất bại:', err.message);
+    }
+  }
+
+  if (video?.url) {
+    try {
+      await sendZaloText(userId, `📹 Xem video: ${video.url}`);
+    } catch (err) {
+      console.error('[Zalo] Gửi link video cho dân thất bại:', err.message);
+    }
+  }
 }
 
 async function sendZaloButtons(userId, text, buttons) {
@@ -463,6 +506,8 @@ module.exports = {
   uploadImageBufferToZalo,
   uploadImageToZalo,
   uploadFileToZalo,
+  uploadFileBufferToZalo,
+  sendAttachmentsToUser,
   getZaloGroupMembers,
   getGroupsOfOA,
   getGroupMembersV3,
