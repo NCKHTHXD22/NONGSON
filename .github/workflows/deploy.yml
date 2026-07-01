@@ -25,6 +25,22 @@ jobs:
             grep -q "^ZALO_ASSET_ID=" Backend/.env \
               && sed -i "s|^ZALO_ASSET_ID=.*|ZALO_ASSET_ID=3015917682781745837|" Backend/.env \
               || echo "ZALO_ASSET_ID=3015917682781745837" >> Backend/.env
+            # Seed Zalo token vào Redis từ .env hiện tại (để token trong Redis không bị stale sau restart)
+            UPSTASH_URL=$(grep "^UPSTASH_REDIS_REST_URL=" Backend/.env | cut -d= -f2- | tr -d '"')
+            UPSTASH_TOKEN=$(grep "^UPSTASH_REDIS_REST_TOKEN=" Backend/.env | cut -d= -f2- | tr -d '"')
+            OA_TOKEN=$(grep "^ZALO_OA_TOKEN=" Backend/.env | cut -d= -f2-)
+            REFRESH_TOKEN=$(grep "^ZALO_REFRESH_TOKEN=" Backend/.env | cut -d= -f2-)
+            if [ -n "$UPSTASH_URL" ] && [ -n "$OA_TOKEN" ]; then
+              curl -s -X POST "$UPSTASH_URL" \
+                -H "Authorization: Bearer $UPSTASH_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "[\"SET\",\"nongson_zalo_access_token\",\"$OA_TOKEN\"]" > /dev/null
+              curl -s -X POST "$UPSTASH_URL" \
+                -H "Authorization: Bearer $UPSTASH_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "[\"SET\",\"nongson_zalo_refresh_token\",\"$REFRESH_TOKEN\"]" > /dev/null
+              echo "✅ Đã seed Zalo token vào Redis"
+            fi
             cd Backend && npm install --omit=dev && cd ..
             pm2 delete nongson-backend 2>/dev/null || true
             pm2 start server.js --name nongson-backend --cwd ${{ secrets.VPS_APP_DIR }}/Backend
