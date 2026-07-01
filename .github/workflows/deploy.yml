@@ -21,6 +21,10 @@ jobs:
             cd ${{ secrets.VPS_APP_DIR }}
             git fetch origin main
             git reset --hard origin/main
+            # Cập nhật các biến env bổ sung vào Backend/.env (không ghi đè toàn bộ file)
+            grep -q "^ZALO_ASSET_ID=" Backend/.env \
+              && sed -i "s|^ZALO_ASSET_ID=.*|ZALO_ASSET_ID=3015917682781745837|" Backend/.env \
+              || echo "ZALO_ASSET_ID=3015917682781745837" >> Backend/.env
             cd Backend && npm install --omit=dev && cd ..
             pm2 delete nongson-backend 2>/dev/null || true
             pm2 start server.js --name nongson-backend --cwd ${{ secrets.VPS_APP_DIR }}/Backend
