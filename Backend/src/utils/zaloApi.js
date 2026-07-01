@@ -90,6 +90,30 @@ async function sendZaloButtons(userId, text, buttons) {
   await sendZaloText(userId, `${text}\n\n${btnLabels}`);
 }
 
+async function sendZaloLinkButton(userId, title, subtitle, buttonLabel, url) {
+  try {
+    const res = await zaloPost('https://openapi.zalo.me/v2.0/oa/message', {
+      recipient: { user_id: String(userId) },
+      message: {
+        attachment: {
+          type: 'template',
+          payload: {
+            template_type: 'list',
+            elements: [{ title, subtitle, default_action: { type: 'oa.open.url', url } }],
+            buttons: [{ title: buttonLabel, type: 'oa.open.url', payload: { url } }],
+          },
+        },
+      },
+    });
+    if (res.data?.error !== 0) {
+      await sendZaloText(userId, `${title}\n${subtitle}\n👉 ${url}`);
+    }
+  } catch (err) {
+    console.error('[Zalo] sendZaloLinkButton thất bại:', err.message);
+    await sendZaloText(userId, `${title}\n${subtitle}\n👉 ${url}`);
+  }
+}
+
 // Gửi text vào nhóm Zalo (theo groupId)
 async function sendZaloToGroup(text, groupId, mentions = []) {
   const targetId = groupId || CONFIG.ZALO_GROUP_ID;
@@ -285,6 +309,7 @@ module.exports = {
   sendZaloText,
   sendZaloTextToGroup,
   sendZaloButtons,
+  sendZaloLinkButton,
   sendZaloToGroup,
   sendZaloGroupText,
   sendZaloImages,

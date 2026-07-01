@@ -38,4 +38,18 @@ async function uploadFromZaloImageUrl(zaloUrl) {
   return uploadFromBuffer(buffer, filename);
 }
 
-module.exports = { uploadFromUrl, uploadFromBuffer, uploadFromZaloImageUrl };
+// Upload buffer generic — hỗ trợ image, video, raw (file đính kèm nội bộ)
+async function uploadBufferGeneric(buffer, publicId, resourceType = 'image') {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'nongson-task-attachments', resource_type: resourceType, public_id: publicId },
+      (err, result) => {
+        if (err) return reject(err);
+        resolve(result.secure_url);
+      }
+    );
+    stream.end(buffer);
+  });
+}
+
+module.exports = { uploadFromUrl, uploadFromBuffer, uploadFromZaloImageUrl, uploadBufferGeneric };

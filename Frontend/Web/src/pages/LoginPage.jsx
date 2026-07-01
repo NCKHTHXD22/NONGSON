@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { Suspense, lazy, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useMutation } from '@tanstack/react-query'
 import { Building2, Eye, EyeOff, Loader2, Lock, User, ArrowLeft, KeyRound, ShieldCheck } from 'lucide-react'
 import { api } from '@/lib/api'
 import { useAuth } from '@/contexts/AuthContext'
 import { toast } from 'sonner'
+
+const GlobeHero = lazy(() => import('@/components/login/GlobeHero'))
 
 // mode: 'login' | 'forgot' | 'reset'
 export default function LoginPage() {
@@ -76,43 +78,33 @@ export default function LoginPage() {
     resetMutation.mutate()
   }
 
-  const decorativePanel = (
-    <div
-      className="hidden lg:flex lg:w-5/12 flex-col items-center justify-center p-12 relative overflow-hidden"
-      style={{ background: 'linear-gradient(145deg, #0d1b2a 0%, #1a3a5c 50%, #0d2d4a 100%)' }}
-    >
-      <div className="absolute -top-16 -left-16 h-64 w-64 rounded-full bg-blue-600/10" />
-      <div className="absolute bottom-12 -right-12 h-48 w-48 rounded-full bg-cyan-500/8" />
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-80 w-80 rounded-full bg-blue-800/10" />
-      <div className="relative text-center">
-        <div className="inline-flex h-20 w-20 items-center justify-center rounded-3xl bg-gradient-to-br from-blue-500 to-cyan-400 shadow-2xl shadow-blue-900/50 mb-6">
-          <Building2 className="h-10 w-10 text-white" />
-        </div>
-        <h1 className="text-white text-3xl font-extrabold mb-3 leading-tight">
-          UBND Xã<br />Nong Son
-        </h1>
-        <p className="text-blue-300/80 text-base leading-relaxed max-w-xs mx-auto">
-          Hệ thống gửi thông tin, cảnh báo<br />đến người dân, cán bộ, lãnh đạo
-        </p>
-      </div>
-    </div>
-  )
-
   return (
-    <div className="min-h-screen flex items-stretch">
-      {decorativePanel}
+    <div className="relative min-h-screen overflow-hidden flex items-center justify-end"
+      style={{ background: '#050a1c' }}>
 
-      <div className="flex-1 flex items-center justify-center p-6 bg-slate-50">
-        <div className="w-full max-w-sm">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex flex-col items-center mb-8">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-600 to-cyan-500 shadow-lg mb-3">
-              <Building2 className="h-7 w-7 text-white" />
-            </div>
-            <h2 className="text-xl font-bold text-slate-800">UBND Xã Nong Son</h2>
+      {/* Globe background */}
+      <Suspense fallback={null}>
+        <GlobeHero />
+      </Suspense>
+
+      {/* Gradient overlay phía phải để form dễ đọc hơn */}
+      <div
+        className="pointer-events-none absolute inset-0 z-[3]"
+        style={{ background: 'linear-gradient(to left, rgba(5,10,28,.80) 30%, transparent 75%)' }}
+      />
+
+      {/* Login form — floating right */}
+      <div className="relative z-[4] w-full max-w-sm mr-8 lg:mr-16 xl:mr-24 my-8">
+        {/* Logo */}
+        <div className="flex flex-col items-center mb-6">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 shadow-2xl shadow-blue-900/50 mb-3">
+            <Building2 className="h-7 w-7 text-white" />
           </div>
+          <h2 className="text-white text-xl font-extrabold tracking-tight">UBND Xã Nông Sơn</h2>
+          <p className="text-blue-300/70 text-xs mt-1">Hệ thống quản lý góp ý - phản ánh</p>
+        </div>
 
-          <div className="bg-white rounded-3xl shadow-xl shadow-slate-200/60 border border-slate-100 p-8">
+        <div className="bg-white/95 backdrop-blur-md rounded-3xl shadow-2xl border border-white/20 p-8">
 
             {/* ── BƯỚC 1: Đăng nhập ── */}
             {mode === 'login' && (
@@ -323,7 +315,6 @@ export default function LoginPage() {
                 </form>
               </>
             )}
-          </div>
         </div>
       </div>
     </div>

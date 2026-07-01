@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutDashboard, MessageSquare, Users, LogOut, Settings, Building2, Send } from 'lucide-react'
+import { LayoutDashboard, MessageSquare, Users, LogOut, Settings, Building2, Send, FileBarChart2 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/lib/utils'
 
@@ -70,6 +70,20 @@ export default function Sidebar() {
           <NavItem to="/dashboard" icon={LayoutDashboard} label="Tổng quan" />
           <NavItem to="/feedbacks" icon={MessageSquare} label="Góp ý - Phản ánh" />
         </div>
+        {/* Báo cáo — superadmin + dept_leader */}
+        {(user?.role === 'superadmin' || user?.role === 'dept_leader') && (
+          <>
+            <p className="px-3 pt-5 pb-2 text-[10px] font-bold uppercase tracking-widest text-white/25 select-none">
+              Báo cáo
+            </p>
+            <div className="space-y-0.5">
+              <NavItem to="/reports" icon={FileBarChart2} label="Thống kê - Báo cáo" />
+              {user?.role === 'superadmin' && (
+                <NavItem to="/messages" icon={Send} label="Gửi tin nhắn Zalo" />
+              )}
+            </div>
+          </>
+        )}
         {/* Quản trị — chỉ superadmin */}
         {user?.role === 'superadmin' && (
           <>
@@ -79,7 +93,6 @@ export default function Sidebar() {
             <div className="space-y-0.5">
               <NavItem to="/users"    icon={Users}    label="Tài khoản Admin" />
               <NavItem to="/settings" icon={Settings} label="Cài đặt nhóm Zalo" />
-              <NavItem to="/messages" icon={Send}     label="Gửi tin nhắn Zalo" />
             </div>
           </>
         )}

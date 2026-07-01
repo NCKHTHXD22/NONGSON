@@ -1,32 +1,61 @@
-const { sendZaloText, sendZaloToGroup, getZaloUserProfile } = require('../utils/zaloApi');
+const { sendZaloText, sendZaloToGroup, sendZaloLinkButton, getZaloUserProfile } = require('../utils/zaloApi');
 const { uploadFromUrl, uploadFromZaloImageUrl } = require('../utils/cloudinary');
 const Feedback = require('../models/Feedback');
 const Category = require('../models/Category');
+const CONFIG = require('../config');
+
+// Viewbox xã Nông Sơn, Quảng Nam (lng_min,lat_min,lng_max,lat_max)
+const NONG_SON_VIEWBOX = '107.95,15.6,108.2,15.78';
+const QUANG_NAM_VIEWBOX = '107.7,15.3,108.5,16.1';
+
+async function geocodeAddress(address) {
+  const axios = require('axios');
+  const headers = { 'User-Agent': 'UBND-NongSon-GopY/1.0' };
+  const query = `${address}, Nông Sơn, Quảng Nam, Việt Nam`;
+  const search = (viewbox) => axios.get('https://nominatim.openstreetmap.org/search', {
+    params: { q: query, format: 'json', limit: 1, countrycodes: 'vn', viewbox, bounded: 1 },
+    headers,
+    timeout: 5000,
+  });
+  try {
+    let res = await search(NONG_SON_VIEWBOX);
+    if (!res.data?.length) res = await search(QUANG_NAM_VIEWBOX);
+    if (res.data?.length) return { lat: Number(res.data[0].lat), lng: Number(res.data[0].lon) };
+  } catch (err) {
+    console.error('[Geocode] Lỗi:', err.message);
+  }
+  return null;
+}
+
+async function sendLocationPrompt(userId) {
+  const publicUrl = CONFIG.PUBLIC_URL;
+  if (publicUrl) {
+    const url = `${publicUrl}/location?uid=${userId}`;
+    await sendZaloLinkButton(
+      userId,
+      '📍 Cung cấp vị trí phản ánh',
+      'Nhấn nút để tự động lấy vị trí GPS — hoặc gõ địa chỉ tay — hoặc nhắn "1" để bỏ qua.',
+      '📡 Lấy vị trí GPS tự động',
+      url,
+    );
+  } else {
+    await sendZaloText(userId,
+      '📍 Vui lòng cung cấp địa chỉ / vị trí phản ánh:\n\n' +
+      '• Gõ địa chỉ cụ thể (VD: Thôn Trung Phước, xã Nông Sơn)\n' +
+      '• Hoặc chia sẻ vị trí GPS từ điện thoại bằng nút đính kèm 📎\n\n' +
+      '1️⃣ Bỏ qua — không cung cấp địa chỉ\n\n' +
+      '(Nhắn "huỷ" để thoát)'
+    );
+  }
+}
+
+const { setState, getState, clearState } = require('./chatState');
 
 const MAX_IMAGES = 5;
 const BATCH_DELAY_MS = 3000; // Chờ 3s để gộp ảnh gửi cùng lúc (Zalo có thể giao event chậm)
 
-// State machine lưu trạng thái từng user trong memory (10 phút timeout)
-const userStates = new Map();
-
 // Buffer gộp ảnh: { userId → { urls: [], timer } }
 const imageBatchBuffer = new Map();
-
-function setState(userId, data) {
-  userStates.set(userId, { ...data, ts: Date.now() });
-  setTimeout(() => {
-    const cur = userStates.get(userId);
-    if (cur && cur.ts === userStates.get(userId)?.ts) userStates.delete(userId);
-  }, 10 * 60 * 1000);
-}
-
-function getState(userId) {
-  return userStates.get(userId) || null;
-}
-
-function clearState(userId) {
-  userStates.delete(userId);
-}
 
 function isPhone(text) {
   return /^(0|\+84)[3-9]\d{8}$/.test(text.replace(/\s/g, ''));
@@ -157,8 +186,27 @@ async function handleText(userId, text, displayName) {
       await sendZaloText(userId, '⚠️ Nội dung quá ngắn. Vui lòng nhập ít nhất 5 ký tự.');
       return;
     }
-    const newState = { ...state, step: 'waiting_image', content: text.trim(), imageUrls: [] };
-    setState(userId, newState);
+    setState(userId, { ...state, step: 'waiting_location', content: text.trim() });
+    await sendLocationPrompt(userId);
+    return;
+  }
+
+  if (state.step === 'waiting_location') {
+    const skipKeywords = ['1', 'bỏ qua', 'bo qua', 'skip', 'không', 'khong'];
+    if (skipKeywords.some(k => lower.trim() === k)) {
+      setState(userId, { ...state, step: 'waiting_image', location: null, imageUrls: [] });
+      await sendImagePrompt(userId, 0);
+      return;
+    }
+    const addr = text.trim();
+    const geo = await geocodeAddress(addr);
+    setState(userId, {
+      ...state,
+      step: 'waiting_image',
+      location: { address: addr, lat: geo?.lat ?? null, lng: geo?.lng ?? null },
+      imageUrls: [],
+    });
+    await sendZaloText(userId, `✅ Đã ghi nhận địa chỉ: ${addr}`);
     await sendImagePrompt(userId, 0);
     return;
   }
@@ -310,11 +358,15 @@ async function sendConfirmation(userId, state) {
   const imageStatus = imageUrls.length > 0
     ? `✅ ${imageUrls.length} ảnh đính kèm`
     : '❌ Không có ảnh';
+  const locationInfo = state.location?.address
+    ? `• Vị trí: ${state.location.address}\n`
+    : '';
   await sendZaloText(userId,
     '📋 Xác nhận góp ý:\n' +
     `• Liên hệ: ${state.contact}\n` +
     `• Loại: ${state.categoryName || 'Chưa chọn'}\n` +
     `• Nội dung: ${state.content}\n` +
+    locationInfo +
     `• Hình ảnh: ${imageStatus}\n\n` +
     'Trả lời bằng số:\n' +
     '1️⃣ Xác nhận gửi\n' +
@@ -344,6 +396,7 @@ async function saveFeedback(userId, state) {
       imageUrl: imageUrls[0] || '',
       imageUrls,
       categoryId: state.categoryId || null,
+      location: state.location || { address: '', lat: null, lng: null },
       deadline,
     });
     clearState(userId);
@@ -385,6 +438,22 @@ async function saveFeedback(userId, state) {
   }
 }
 
+// Xử lý khi user chia sẻ vị trí GPS qua Zalo (hoặc qua mini web /location)
+async function handleLocation(userId, { lat, lng, address }) {
+  const state = getState(userId);
+  if (!state || state.step !== 'waiting_location') return;
+
+  const addr = address || `${lat}, ${lng}`;
+  setState(userId, {
+    ...state,
+    step: 'waiting_image',
+    location: { address: addr, lat: Number(lat), lng: Number(lng) },
+    imageUrls: [],
+  });
+  await sendZaloText(userId, `✅ Đã ghi nhận vị trí: ${addr}`);
+  await sendImagePrompt(userId, 0);
+}
+
 function isFeedbackTrigger(text) {
   const lower = text.toLowerCase();
   return (
@@ -397,4 +466,4 @@ function isFeedbackTrigger(text) {
   );
 }
 
-module.exports = { startFeedback, handleText, handleImage, handleContactCard, isFeedbackTrigger };
+module.exports = { startFeedback, handleText, handleImage, handleContactCard, handleLocation, isFeedbackTrigger, geocodeAddress };

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { Search, ChevronLeft, ChevronRight, Loader2, Filter, Eye, Inbox } from 'lucide-react'
 import { api } from '@/lib/api'
@@ -28,8 +28,15 @@ function SelectField({ value, onChange, children }) {
 
 export default function FeedbacksPage() {
   const { user } = useAuth()
-  const [filter, setFilter] = useState({ status: '', assignedTo: '', categoryId: '', q: '' })
+  const [searchParams] = useSearchParams()
+  const [filter, setFilter] = useState({ status: '', assignedTo: '', categoryId: '', q: searchParams.get('q') || '' })
   const [page, setPage] = useState(1)
+
+  useEffect(() => {
+    const q = searchParams.get('q') || ''
+    setFilter((f) => ({ ...f, q }))
+    setPage(1)
+  }, [searchParams])
 
   const { data, isLoading } = useQuery({
     queryKey: ['feedbacks', filter, page],

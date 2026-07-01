@@ -69,6 +69,18 @@ mongoose.connect(CONFIG.MONGO_URI)
       console.log('[Admin] Tài khoản mặc định: admin / admin@2025 — đổi mật khẩu sau khi đăng nhập!');
     }
 
+    // Seed 4 danh mục mặc định (chỉ khi chưa có)
+    const catCount = await Category.countDocuments();
+    if (catCount === 0) {
+      await Category.insertMany([
+        { name: 'Môi trường, Hạ tầng, Xây dựng', zaloGroupId: '', icon: '🏗️', order: 1 },
+        { name: 'Văn hoá, Giáo dục, Y tế',       zaloGroupId: '', icon: '📚', order: 2 },
+        { name: 'Dịch vụ công, Thủ tục hành chính', zaloGroupId: '', icon: '🏛️', order: 3 },
+        { name: 'An ninh trật tự, PCCC',           zaloGroupId: '', icon: '🚨', order: 4 },
+      ]);
+      console.log('[Category] Đã tạo 4 danh mục mặc định — cấu hình zaloGroupId trong Admin Dashboard.');
+    }
+
   })
   .catch(err => console.error('[MongoDB] Lỗi kết nối:', err.message));
 
@@ -144,6 +156,75 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
+// ── Trang mini web lấy GPS (mở từ nút bấm Zalo) ──────
+app.get('/location', (req, res) => {
+  const uid = req.query.uid || '';
+  res.type('html').send(`<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Chia sẻ vị trí</title>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f9ff;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .card{background:#fff;border-radius:20px;padding:36px 28px;box-shadow:0 8px 32px rgba(0,0,0,.12);max-width:340px;width:100%;text-align:center}
+    .icon{font-size:60px;margin-bottom:16px}
+    h2{color:#1e293b;font-size:20px;margin-bottom:8px}
+    p{color:#64748b;font-size:14px;line-height:1.6;margin-bottom:24px}
+    .btn{width:100%;padding:16px;background:#0068ff;color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer;transition:background .2s}
+    .btn:hover{background:#0053cc}
+    .btn:disabled{background:#94a3b8;cursor:not-allowed}
+    .status{margin-top:16px;font-size:13px;color:#64748b;min-height:20px}
+    .ok{color:#10b981;font-size:18px;font-weight:700}
+    .err{color:#ef4444}
+  </style>
+</head>
+<body>
+<div class="card" id="card">
+  <div class="icon">📍</div>
+  <h2>Chia sẻ vị trí phản ánh</h2>
+  <p>Nhấn nút bên dưới, trình duyệt sẽ xin quyền truy cập vị trí GPS và tự động ghi nhận.</p>
+  <button class="btn" id="btn" onclick="go()">📡 Lấy vị trí hiện tại</button>
+  <div class="status" id="st"></div>
+</div>
+<script>
+const uid='${uid}';
+function go(){
+  const btn=document.getElementById('btn'),st=document.getElementById('st');
+  btn.disabled=true;btn.textContent='⏳ Đang lấy vị trí...';
+  st.textContent='Vui lòng cho phép truy cập vị trí khi được hỏi.';
+  if(!navigator.geolocation){
+    st.innerHTML='<span class="err">Thiết bị không hỗ trợ GPS.</span>';
+    btn.disabled=false;btn.textContent='📡 Lấy vị trí hiện tại';return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    async pos=>{
+      const{latitude:lat,longitude:lng}=pos.coords;
+      st.textContent='Đang gửi vị trí về máy chủ...';
+      try{
+        const r=await fetch('/api/public/location-submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({uid,lat,lng})});
+        const d=await r.json();
+        if(d.ok){
+          document.getElementById('card').innerHTML='<div class="icon">✅</div><h2 class="ok">Đã ghi nhận vị trí!</h2><p>Quay lại Zalo để tiếp tục gửi phản ánh.</p>';
+        }else throw new Error(d.message);
+      }catch(e){
+        st.innerHTML='<span class="err">Lỗi: '+e.message+'</span>';
+        btn.disabled=false;btn.textContent='📡 Thử lại';
+      }
+    },
+    err=>{
+      const m={1:'Bạn chưa cho phép truy cập vị trí.',2:'Không lấy được tín hiệu GPS.',3:'Hết thời gian chờ, thử lại.'};
+      st.innerHTML='<span class="err">'+(m[err.code]||'Lỗi không xác định.')+'</span>';
+      btn.disabled=false;btn.textContent='📡 Thử lại';
+    },
+    {enableHighAccuracy:true,timeout:15000,maximumAge:0}
+  );
+}
+</script>
+</body></html>`);
+});
+
 // ── Zalo token thủ công (không cần auth, đặt TRƯỚC admin router) ──
 app.get('/admin/set-tokens', (_req, res) => {
   res.send(`<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>Set Zalo Tokens - Nong Son</title>
@@ -192,6 +273,12 @@ require('./src/services/schedulerService').start();
 
 // ── Tự động đồng bộ lịch cắt điện EVNCPC (mỗi 30 phút) ──
 require('./src/services/catDienService').startAutoSync();
+
+// ── Nhắc hạn xử lý phản ánh (mỗi 1 giờ) ──────────────
+require('./src/services/deadlineReminderService').startDeadlineReminder();
+
+// ── Đồng bộ nhóm Zalo → Categories (mỗi 30 phút) ─────
+require('./src/services/groupSyncService').startGroupSyncSchedule();
 
 // ── REST API cho React frontend ────────────────────────
 const apiRouter = require('./src/routes/index');
